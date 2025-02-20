@@ -57,23 +57,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Send all reasoning messages first, then the answer
-    let delay = 0;
+    // Send messages sequentially
     mockResponses.forEach((response, index) => {
-      if (response.type === "reasoning" || index === mockResponses.length - 1) {
-        setTimeout(() => {
-          const agentMessage: Message = {
-            id: messages.length + index + 1,
-            content: response.content,
-            type: response.type,
-            isUser: false,
-            conversationId: currentConversationId?.toString() || "new",
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, agentMessage]);
-        }, delay);
-        delay += 10000; // 10 seconds between each message
-      }
+      setTimeout(() => {
+        const agentMessage: Message = {
+          id: messages.length + index + 1,
+          content: response.content,
+          type: response.type as "reasoning" | "answer",
+          isUser: false,
+          conversationId: currentConversationId?.toString() || "new",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, agentMessage]);
+      }, (index + 1) * 3000); // Send a message every 3 seconds
     });
   };
 

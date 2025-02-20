@@ -61,7 +61,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
               setShowCollapseButton(true);
             }
           }
-        }, 200);
+        }, 100); // Faster typing speed
         intervals.push(interval);
       } else {
         setDisplayedMessages(prev => {
