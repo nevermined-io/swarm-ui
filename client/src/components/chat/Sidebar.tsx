@@ -12,8 +12,8 @@ export default function Sidebar({ conversations }: SidebarProps) {
   const { currentConversationId, setCurrentConversationId } = useChat();
 
   return (
-    <div className="w-64 border-r bg-card">
-      <div className="p-4 border-b">
+    <div className="w-64 bg-background">
+      <div className="p-4">
         <h2 className="font-semibold">Conversations</h2>
       </div>
       <ScrollArea className="h-[calc(100vh-65px)]">
@@ -23,8 +23,8 @@ export default function Sidebar({ conversations }: SidebarProps) {
               key={conversation.id}
               onClick={() => setCurrentConversationId(conversation.id)}
               className={cn(
-                "w-full p-3 rounded-lg flex items-center gap-2 hover:bg-accent transition-colors",
-                currentConversationId === conversation.id && "bg-accent"
+                "w-full p-3 rounded-lg flex items-center gap-2 hover:bg-muted/50 transition-colors",
+                currentConversationId === conversation.id && "bg-muted/50"
               )}
             >
               <MessageSquare className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { useChat } from "@/lib/chat-context";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function ChatInput() {
   const [input, setInput] = useState("");
@@ -16,18 +17,23 @@ export default function ChatInput() {
     }
   };
 
+  const isEmpty = messages.length === 0;
+
   return (
     <motion.div
-      initial={messages.length === 0 ? { y: "-50%" } : false}
+      initial={isEmpty ? { y: "-50vh" } : false}
       animate={{ y: 0 }}
-      className="p-4 border-t bg-background"
+      className={cn(
+        "p-4 bg-background",
+        isEmpty ? "h-screen flex items-center justify-center" : ""
+      )}
     >
-      <div className="flex gap-2">
+      <div className="relative w-full max-w-2xl mx-auto">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
-          className="resize-none"
+          className="resize-none pr-12"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -35,7 +41,12 @@ export default function ChatInput() {
             }
           }}
         />
-        <Button onClick={handleSubmit} size="icon">
+        <Button 
+          onClick={handleSubmit} 
+          size="icon" 
+          variant="ghost"
+          className="absolute right-2 top-1/2 -translate-y-1/2"
+        >
           <Send className="w-4 h-4" />
         </Button>
       </div>
