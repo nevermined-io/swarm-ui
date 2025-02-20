@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Message } from "@shared/schema";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 
 interface MessageGroupProps {
   messages: Message[];
@@ -41,39 +40,35 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   };
 
   useEffect(() => {
-    let intervals: NodeJS.Timeout[] = [];
-
-    messages.forEach((message, messageIndex) => {
-      if (!message.isUser) {
-        let currentWordIndex = 0;
-        const interval = setInterval(() => {
-          if (currentWordIndex < words[messageIndex].length) {
+    async function typeMessages() {
+      for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
+        const message = messages[messageIndex];
+        if (!message.isUser) {
+          const messageWords = words[messageIndex];
+          for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
             setDisplayedMessages(prev => {
               const newMessages = [...prev];
-              newMessages[messageIndex] = words[messageIndex].slice(0, currentWordIndex + 1).join(" ");
+              newMessages[messageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
               return newMessages;
             });
-            currentWordIndex++;
-          } else {
-            clearInterval(interval);
-            // Show collapse button when all reasoning messages are typed
-            if (isReasoningGroup && messageIndex === messages.length - 1) {
-              setShowCollapseButton(true);
-            }
           }
-        }, 100); // Faster typing speed
-        intervals.push(interval);
-      } else {
-        setDisplayedMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[messageIndex] = message.content;
-          return newMessages;
-        });
+          // If this is the last reasoning message in a reasoning group
+          if (isReasoningGroup && messageIndex === messages.length - 1) {
+            setShowCollapseButton(true);
+          }
+        } else {
+          setDisplayedMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[messageIndex] = message.content;
+            return newMessages;
+          });
+        }
       }
-    });
+    }
 
-    return () => intervals.forEach(clearInterval);
-  }, []);
+    typeMessages();
+  }, [messages]);
 
   if (isCollapsed && isReasoningGroup) {
     return (
@@ -120,7 +115,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
         )}
         <div className="space-y-4">
           {displayedMessages.map((text, index) => (
-            <div key={index}>{createClickableLinks(text)}</div>
+            <div key={index}>{text && createClickableLinks(text)}</div>
           ))}
         </div>
       </div>
