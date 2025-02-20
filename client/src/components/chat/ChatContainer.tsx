@@ -83,10 +83,15 @@ export default function ChatContainer() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setSidebarOpen(true)}
-                className="mr-auto"
+                className="mr-2"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
+            )}
+            {!isEmpty && (
+              <div className="text-lg font-semibold flex-1 text-center">
+                Video generator agent powered by Nevermined
+              </div>
             )}
             <Avatar className="cursor-pointer ml-auto">
               <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />

@@ -25,9 +25,14 @@ export default function ChatInput() {
       animate={{ y: 0 }}
       className={cn(
         "p-4 bg-muted/80",
-        isEmpty ? "h-[calc(100vh-64px)] flex items-center justify-center" : ""
+        isEmpty ? "h-[calc(100vh-64px)] flex flex-col items-center justify-center" : ""
       )}
     >
+      {isEmpty && (
+        <div className="mb-8 text-xl font-semibold text-center">
+          Video generator agent powered by Nevermined
+        </div>
+      )}
       <div className="relative w-full max-w-2xl mx-auto">
         <Textarea
           value={input}
