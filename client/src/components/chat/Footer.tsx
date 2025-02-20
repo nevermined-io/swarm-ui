@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { HelpCircle } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -7,9 +8,15 @@ export default function Footer() {
         <div>
           © {new Date().getFullYear()} Chat Interface. All rights reserved.
         </div>
-        <Link href="/terms" className="hover:text-foreground transition-colors">
-          Terms & Conditions
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/terms" className="hover:text-foreground transition-colors flex items-center gap-1">
+            Terms & Conditions
+          </Link>
+          <Link href="/help" className="hover:text-foreground transition-colors flex items-center gap-1">
+            <HelpCircle className="h-4 w-4" />
+            Help
+          </Link>
+        </div>
       </div>
     </footer>
   );
