@@ -3,11 +3,20 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 0 0% 3.9%;
+  }
+
+  html,
+  body {
+    @apply bg-background min-h-screen;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
   }
 }
