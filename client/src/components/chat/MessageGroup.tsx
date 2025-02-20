@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Message } from "@shared/schema";
@@ -13,6 +13,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showCollapseButton, setShowCollapseButton] = useState(false);
+  const typedMessagesCount = useRef(0);
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const words = messages.map(m => m.content.split(" "));
@@ -41,7 +42,8 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
 
   useEffect(() => {
     async function typeMessages() {
-      for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
+      // Start from the last typed message
+      for (let messageIndex = typedMessagesCount.current; messageIndex < messages.length; messageIndex++) {
         const message = messages[messageIndex];
         if (!message.isUser) {
           const messageWords = words[messageIndex];
@@ -53,7 +55,9 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
               return newMessages;
             });
           }
-          // If this is the last reasoning message in a reasoning group
+          typedMessagesCount.current = messageIndex + 1;
+
+          // Only show collapse button when all reasoning messages are typed
           if (isReasoningGroup && messageIndex === messages.length - 1) {
             setShowCollapseButton(true);
           }
@@ -63,12 +67,13 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             newMessages[messageIndex] = message.content;
             return newMessages;
           });
+          typedMessagesCount.current = messageIndex + 1;
         }
       }
     }
 
     typeMessages();
-  }, [messages]);
+  }, [messages.length]); // Only re-run when new messages are added
 
   if (isCollapsed && isReasoningGroup) {
     return (
