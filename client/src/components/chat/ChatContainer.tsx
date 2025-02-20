@@ -11,12 +11,12 @@ export default function ChatContainer() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-screen bg-muted">
+    <div className="flex h-screen">
       <Sidebar conversations={conversations} />
       <Separator orientation="vertical" className="opacity-50" />
 
-      <div className="flex-1 flex flex-col">
-        <div className="p-4 flex justify-end items-center bg-background">
+      <div className="flex-1 flex flex-col bg-muted/80">
+        <div className="p-4 flex justify-end items-center bg-muted/80">
           <Avatar className="cursor-pointer">
             <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
             <AvatarFallback>U</AvatarFallback>

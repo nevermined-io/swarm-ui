@@ -24,7 +24,7 @@ export default function ChatInput() {
       initial={isEmpty ? { y: "-50vh" } : false}
       animate={{ y: 0 }}
       className={cn(
-        "p-4 bg-background",
+        "p-4 bg-muted/80",
         isEmpty ? "h-screen flex items-center justify-center" : ""
       )}
     >
@@ -33,7 +33,7 @@ export default function ChatInput() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
-          className="resize-none pr-12"
+          className="resize-none pr-12 bg-background/50"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -45,7 +45,7 @@ export default function ChatInput() {
           onClick={handleSubmit} 
           size="icon" 
           variant="ghost"
-          className="absolute right-2 top-1/2 -translate-y-1/2"
+          className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-background/50"
         >
           <Send className="w-4 h-4" />
         </Button>
