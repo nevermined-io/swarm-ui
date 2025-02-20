@@ -21,11 +21,11 @@ export default function ChatInput() {
 
   return (
     <motion.div
-      initial={isEmpty ? { y: "-50vh" } : false}
+      initial={isEmpty ? { y: 0 } : false}
       animate={{ y: 0 }}
       className={cn(
         "p-4 bg-muted/80",
-        isEmpty ? "h-screen flex items-center justify-center" : ""
+        isEmpty ? "h-[calc(100vh-64px)] flex items-center justify-center" : ""
       )}
     >
       <div className="relative w-full max-w-2xl mx-auto">

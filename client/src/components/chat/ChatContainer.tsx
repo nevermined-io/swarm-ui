@@ -5,7 +5,7 @@ import ChatInput from "./ChatInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,13 @@ interface Message {
 export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Set initial sidebar state based on screen width
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768; // md breakpoint
+    setSidebarOpen(!isMobile);
+  }, []);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
@@ -44,40 +50,43 @@ export default function ChatContainer() {
       <div
         className={cn(
           "transition-all duration-300 ease-in-out",
-          sidebarOpen ? "w-64" : "w-0",
-          "md:relative absolute z-50 h-full bg-background"
+          sidebarOpen ? "w-full md:w-64" : "w-0",
+          "absolute md:relative z-50 h-full bg-background"
         )}
       >
         {sidebarOpen && (
-          <>
+          <div className="relative h-full">
             <Sidebar conversations={conversations} />
-            <Separator orientation="vertical" className="absolute right-0 top-0 h-full opacity-50" />
-          </>
+            <Separator orientation="vertical" className="absolute right-0 top-0 h-full opacity-50 hidden md:block" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(false)}
+              className="absolute top-4 right-4 md:right-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className={cn(
-          "absolute top-4 transition-all duration-300 ease-in-out z-50",
-          sidebarOpen ? "left-64" : "left-4"
-        )}
-      >
-        {sidebarOpen ? (
-          <ChevronLeft className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-      </Button>
-
       <div className={cn(
         "flex-1 flex flex-col bg-muted/80",
-        "transition-all duration-300 ease-in-out"
+        "transition-all duration-300 ease-in-out",
+        !sidebarOpen ? "w-full" : "hidden md:flex"
       )}>
-        <div className="p-4 flex justify-end items-center bg-muted/80">
-          <Avatar className="cursor-pointer">
+        <div className="p-4 flex items-center bg-muted/80">
+          {!sidebarOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(true)}
+              className="mr-auto"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
+          <Avatar className="cursor-pointer ml-auto">
             <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
