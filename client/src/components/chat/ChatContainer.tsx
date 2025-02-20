@@ -107,7 +107,9 @@ export default function ChatContainer() {
           <ChatInput />
         </div>
       </div>
-      <Footer />
+      <div className="relative z-50">
+        <Footer />
+      </div>
     </div>
   );
 }
