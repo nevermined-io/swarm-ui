@@ -13,10 +13,15 @@ export default function Sidebar({ conversations }: SidebarProps) {
 
   return (
     <div className="w-64 bg-background">
-      <div className="p-4">
-        <h2 className="font-semibold">Conversations</h2>
+      <div className="p-4 border-b">
+        <div className="font-bold text-xl tracking-tight mb-1">
+          Chat<span className="text-primary">Interface</span>
+        </div>
       </div>
-      <ScrollArea className="h-[calc(100vh-65px)]">
+      <div className="p-4 border-b">
+        <h2 className="font-semibold text-sm">Conversations</h2>
+      </div>
+      <ScrollArea className="h-[calc(100vh-140px)]">
         <div className="p-2 space-y-2">
           {conversations.map((conversation) => (
             <button
