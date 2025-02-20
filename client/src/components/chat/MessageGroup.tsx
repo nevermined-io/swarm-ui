@@ -46,14 +46,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
       for (let messageIndex = typedMessagesCount.current; messageIndex < messages.length; messageIndex++) {
         const message = messages[messageIndex];
 
-        // Check if this is a reasoning message and if the next message exists and is an answer
-        // This will trigger the collapse button appearance when an answer starts appearing
-        if (isReasoningGroup && 
-            messageIndex === messages.length - 1 && 
-            messages[messageIndex + 1]?.type === "answer") {
-          setShowCollapseButton(true);
-        }
-
         if (!message.isUser) {
           const messageWords = words[messageIndex];
           for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
@@ -72,6 +64,13 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             return newMessages;
           });
           typedMessagesCount.current = messageIndex + 1;
+        }
+
+        // Check if the next message exists and is an answer
+        // This will trigger the collapse button appearance when an answer starts appearing
+        if (isReasoningGroup && 
+            messages[messageIndex + 1]?.type === "answer") {
+          setShowCollapseButton(true);
         }
       }
     }
