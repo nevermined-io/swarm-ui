@@ -9,17 +9,37 @@ interface MockResponse {
 
 const mockResponses: MockResponse[] = [
   { 
-    content: "I'm analyzing your request and gathering relevant visual examples...", 
+    content: `I'm analyzing your request and gathering relevant visual examples...
+
+First, I'll examine the composition guidelines from https://design.nevermined.io/guidelines and cross-reference them with the latest visual trends documented at https://trends.nevermined.io/2025/visual-design.
+
+Based on these sources, I'll generate images that align with our brand identity while maintaining artistic coherence.`, 
     type: "reasoning",
     delay: 1000
   },
   { 
-    content: "Processing multiple image sources and preparing the visual layout...", 
+    content: `Processing multiple image sources and preparing the visual layout...
+
+The generation process involves several steps:
+1. Analyzing reference materials from https://reference.nevermined.io/gallery
+2. Applying style transfer algorithms
+3. Fine-tuning composition parameters
+
+You can learn more about our image generation process at https://docs.nevermined.io/image-generation.`, 
     type: "reasoning",
     delay: 2000
   },
   { 
-    content: "Analyzing composition and aesthetic elements in the generated images...", 
+    content: `Analyzing composition and aesthetic elements in the generated images...
+
+I've evaluated each image against our quality metrics available at https://metrics.nevermined.io/quality-scores and performed detailed color analysis using guidelines from https://colors.nevermined.io/palette-2025.
+
+The results show strong alignment with our brand guidelines, particularly in terms of:
+- Color harmony
+- Compositional balance
+- Visual hierarchy
+
+For more details about our evaluation process, visit https://evaluation.nevermined.io/process.`, 
     type: "reasoning",
     delay: 3000
   },
@@ -37,27 +57,68 @@ https://v3.fal.media/files/koala/_fC63XVgw6EmoWFKKtHbN.png
 https://v3.fal.media/files/kangaroo/2hzFUFYg0xRQ1BYr-GnMi.png
 https://v3.fal.media/files/elephant/qz285LaTtdG98b8dJKRaa.png
 https://v3.fal.media/files/rabbit/nfp94z2VN2asLOetX2spZ.png
-https://v3.fal.media/files/panda/TBdxoUGIoyba3_OnaNhPT.png`, 
+https://v3.fal.media/files/panda/TBdxoUGIoyba3_OnaNhPT.png
+
+Each image has been optimized for web display. You can find our image optimization guidelines at https://optimization.nevermined.io/web-images.
+
+For high-resolution versions or different formats, please visit our media library at https://media.nevermined.io/library.`, 
     type: "answer",
     delay: 4000
   },
   {
-    content: "Now, let me fetch some audio examples for you...",
+    content: `Now, let me fetch some audio examples for you...
+
+I'm searching through our extensive audio database at https://audio.nevermined.io/library and analyzing various samples based on:
+- Sound quality metrics
+- Emotional resonance
+- Technical specifications
+
+The selection process is guided by our audio guidelines available at https://guidelines.nevermined.io/audio-production.`,
     type: "reasoning",
     delay: 6000
   },
   {
-    content: "I've found an interesting audio clip about this topic: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3",
+    content: `I've found an interesting audio clip about this topic: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3
+
+This audio sample was carefully selected based on criteria outlined at https://criteria.nevermined.io/audio-selection. 
+
+You can find more audio samples and related resources at:
+- https://samples.nevermined.io/collection
+- https://audio.nevermined.io/featured
+- https://sounds.nevermined.io/trending
+
+For technical specifications and usage guidelines, please refer to https://docs.nevermined.io/audio-usage.`,
     type: "answer",
     delay: 8000
   },
   {
-    content: "Let me also show you a video demonstration...",
+    content: `Let me also show you a video demonstration...
+
+I'm currently:
+1. Analyzing video requirements from https://requirements.nevermined.io/video
+2. Checking rendering specifications at https://specs.nevermined.io/video-render
+3. Applying quality assurance processes detailed at https://qa.nevermined.io/video
+
+Our video selection follows strict guidelines for:
+- Resolution and bitrate
+- Content relevance
+- Visual consistency
+
+Learn more about our video standards at https://standards.nevermined.io/video.`,
     type: "reasoning",
     delay: 10000
   },
   {
-    content: "Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4",
+    content: `Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4
+
+This video was produced following our comprehensive production guidelines available at https://production.nevermined.io/video-guidelines.
+
+Additional resources and related content can be found at:
+- https://videos.nevermined.io/tutorials
+- https://learn.nevermined.io/video-basics
+- https://examples.nevermined.io/video-showcase
+
+For technical documentation and integration guides, visit https://docs.nevermined.io/video-integration.`,
     type: "answer",
     delay: 12000
   }
