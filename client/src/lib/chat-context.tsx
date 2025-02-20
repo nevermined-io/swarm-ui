@@ -1,22 +1,32 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import type { Message, Conversation } from "@shared/schema";
 
-const mockResponses = [
+interface MockResponse {
+  content: string;
+  type: "reasoning" | "answer";
+  delay: number; // delay in milliseconds before showing this message
+}
+
+const mockResponses: MockResponse[] = [
   { 
     content: "I'm analyzing your request using the documentation at https://docs.example.com/analysis and cross-referencing with https://api.example.com/docs...", 
-    type: "reasoning" 
+    type: "reasoning",
+    delay: 1000 // Show after 1 second
   },
   { 
     content: "Checking multiple reliable sources including https://research.example.com/methods and https://data.example.com/validation...", 
-    type: "reasoning" 
+    type: "reasoning",
+    delay: 3000 // Show after 3 seconds
   },
   { 
     content: "Based on the findings from https://results.example.com/insights and https://metrics.example.com/analysis...", 
-    type: "reasoning" 
+    type: "reasoning",
+    delay: 5000 // Show after 5 seconds
   },
   { 
     content: "Here's what I found: The solution is available at https://solution.example.com/guide and you can find additional resources at https://resources.example.com/tutorial", 
-    type: "answer" 
+    type: "answer",
+    delay: 7000 // Show after 7 seconds
   }
 ];
 
@@ -60,7 +70,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Send messages sequentially
+    // Send messages with their respective delays
     mockResponses.forEach((response, index) => {
       setTimeout(() => {
         // If we're transitioning from reasoning to answer, show the collapse button
@@ -73,13 +83,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const agentMessage: Message = {
           id: messages.length + index + 1,
           content: response.content,
-          type: response.type as "reasoning" | "answer",
+          type: response.type,
           isUser: false,
           conversationId: currentConversationId?.toString() || "new",
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, agentMessage]);
-      }, (index + 1) * 3000); // Send a message every 3 seconds
+      }, response.delay); // Use the specified delay for each message
     });
   };
 
