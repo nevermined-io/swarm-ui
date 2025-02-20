@@ -27,6 +27,21 @@ const mockResponses: MockResponse[] = [
     content: "Here's what I found: The solution is available at https://solution.example.com/guide and you can find additional resources at https://resources.example.com/tutorial", 
     type: "answer",
     delay: 7000 // Show after 7 seconds
+  },
+  {
+    content: "Now I'm examining the visual aspects of blockchain technology...",
+    type: "reasoning",
+    delay: 9000
+  },
+  {
+    content: "Processing media resources and analyzing visual representations...",
+    type: "reasoning",
+    delay: 11000
+  },
+  {
+    content: "Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4",
+    type: "answer",
+    delay: 13000
   }
 ];
 

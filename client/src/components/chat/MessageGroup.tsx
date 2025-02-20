@@ -5,6 +5,7 @@ import { Message } from "@shared/schema";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/lib/chat-context";
+import VideoPlayer from "./VideoPlayer";
 
 interface MessageGroupProps {
   messages: Message[];
@@ -18,6 +19,13 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const words = messages.map(m => m.content.split(" "));
+
+  // Function to detect video URLs
+  const detectVideoUrl = (text: string): string | null => {
+    const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
+    const match = text.match(videoRegex);
+    return match ? match[0] : null;
+  };
 
   // Function to convert URLs in text to clickable links with anchor text
   const createClickableLinks = (text: string) => {
@@ -131,7 +139,12 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
         )}
         <div className="space-y-4">
           {displayedMessages.map((text, index) => (
-            <div key={index}>{text && createClickableLinks(text)}</div>
+            <div key={index}>
+              {text && createClickableLinks(text)}
+              {text && detectVideoUrl(text) && (
+                <VideoPlayer src={detectVideoUrl(text)!} />
+              )}
+            </div>
           ))}
         </div>
       </div>
