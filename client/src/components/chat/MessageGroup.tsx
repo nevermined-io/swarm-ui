@@ -17,12 +17,17 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const typedMessagesCount = useRef(0);
   const { showReasoningCollapse } = useChat();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
   const shouldShowCollapseButton = isReasoningGroup && messages.length > 1;
 
   const words = messages.map(m => m.content.split(" "));
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   // Function to detect media URLs
   const detectMediaUrl = (text: string): { type: 'video' | 'audio', url: string } | null => {
@@ -92,6 +97,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
               newMessages[messageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
               return newMessages;
             });
+            scrollToBottom();
           }
           typedMessagesCount.current = messageIndex + 1;
         } else {
@@ -101,6 +107,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             return newMessages;
           });
           typedMessagesCount.current = messageIndex + 1;
+          scrollToBottom();
         }
       }
     }
@@ -144,7 +151,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="mb-2 -mt-2 -ml-2 hover:bg-transparent"
+            className="mb-1 -mt-1 -ml-1 hover:bg-transparent"
             onClick={() => setIsCollapsed(true)}
           >
             <ChevronUp className="w-4 h-4" />
@@ -165,6 +172,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           ))}
         </div>
       </div>
+      <div ref={messagesEndRef} />
     </motion.div>
   );
 }
