@@ -33,9 +33,9 @@ export default function ChatContainer() {
     const lastGroup = groups[groups.length - 1];
 
     if (
-      lastGroup && 
-      lastGroup[0].type === message.type && 
-      !lastGroup[0].isUser && 
+      lastGroup &&
+      lastGroup[0].type === message.type &&
+      !lastGroup[0].isUser &&
       !message.isUser
     ) {
       lastGroup.push(message);
@@ -48,12 +48,12 @@ export default function ChatContainer() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
         <div
           className={cn(
             "transition-all duration-300 ease-in-out",
             sidebarOpen ? "w-full md:w-64" : "w-0",
-            "absolute md:relative z-50 h-full bg-background"
+            "absolute md:relative z-40 h-full bg-background"
           )}
         >
           {sidebarOpen && (
