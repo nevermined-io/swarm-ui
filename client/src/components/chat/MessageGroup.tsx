@@ -30,16 +30,27 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
       const domain = new URL(url).hostname.replace('www.', '');
       const section = new URL(url).pathname.split('/')[1] || '';
       const friendlyName = `${domain}${section ? `/${section}` : ''}`;
-      displayText = displayText.replace(url, friendlyName);
+      displayText = displayText.replace(url, `[[LINK:${friendlyName}:${url}]]`);
       links.push({ url, text: friendlyName });
     });
 
-    // Replace URLs with anchor tags
-    return links.reduce((acc, { url, text }) => {
-      return acc.replace(text, `<a href="${url}" target="_blank" rel="noopener noreferrer" class="font-semibold hover:underline">${text}</a>`);
-    }, displayText).split(/(https?:\/\/[^\s]+)/).map((part, index) => {
-      if (part.startsWith('<a')) {
-        return <span key={index} dangerouslySetInnerHTML={{ __html: part }} onClick={(e) => e.stopPropagation()} />;
+    // Split text by link placeholders and create elements
+    return displayText.split(/(\[\[LINK:[^:]+:[^\]]+\]\])/).map((part, index) => {
+      const linkMatch = part.match(/\[\[LINK:([^:]+):([^\]]+)\]\]/);
+      if (linkMatch) {
+        const [, text, url] = linkMatch;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {text}
+          </a>
+        );
       }
       return part;
     });
