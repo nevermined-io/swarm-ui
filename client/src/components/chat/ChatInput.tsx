@@ -31,7 +31,7 @@ export default function ChatInput() {
       )}
     >
       {isEmpty && (
-        <div className="mb-8 text-xl font-semibold w-full max-w-2xl mx-auto">
+        <div className="mb-4 text-xl font-semibold w-full max-w-2xl mx-auto">
           Video generator agent
         </div>
       )}
