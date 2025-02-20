@@ -29,19 +29,24 @@ const mockResponses: MockResponse[] = [
     delay: 7000 // Show after 7 seconds
   },
   {
-    content: "Now I'm examining the visual aspects of blockchain technology...",
-    type: "reasoning",
+    content: "I've found an interesting audio clip about this topic: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3",
+    type: "answer",
     delay: 9000
   },
   {
-    content: "Processing media resources and analyzing visual representations...",
+    content: "Now I'm examining the visual aspects of blockchain technology...",
     type: "reasoning",
     delay: 11000
   },
   {
+    content: "Processing media resources and analyzing visual representations...",
+    type: "reasoning",
+    delay: 13000
+  },
+  {
     content: "Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4",
     type: "answer",
-    delay: 13000
+    delay: 15000
   }
 ];
 

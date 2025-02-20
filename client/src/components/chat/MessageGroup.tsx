@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/lib/chat-context";
 import VideoPlayer from "./VideoPlayer";
+import AudioPlayer from "./AudioPlayer";
 
 interface MessageGroupProps {
   messages: Message[];
@@ -23,11 +24,22 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
 
   const words = messages.map(m => m.content.split(" "));
 
-  // Function to detect video URLs
-  const detectVideoUrl = (text: string): string | null => {
+  // Function to detect media URLs
+  const detectMediaUrl = (text: string): { type: 'video' | 'audio', url: string } | null => {
     const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
-    const match = text.match(videoRegex);
-    return match ? match[0] : null;
+    const audioRegex = /https?:\/\/[^\s]+\.mp3\b/g;
+
+    const videoMatch = text.match(videoRegex);
+    if (videoMatch) {
+      return { type: 'video', url: videoMatch[0] };
+    }
+
+    const audioMatch = text.match(audioRegex);
+    if (audioMatch) {
+      return { type: 'audio', url: audioMatch[0] };
+    }
+
+    return null;
   };
 
   // Function to convert URLs in text to clickable links with anchor text
@@ -142,8 +154,12 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           {displayedMessages.map((text, index) => (
             <div key={index}>
               {text && createClickableLinks(text)}
-              {text && detectVideoUrl(text) && (
-                <VideoPlayer src={detectVideoUrl(text)!} />
+              {text && detectMediaUrl(text) && (
+                detectMediaUrl(text)?.type === 'video' ? (
+                  <VideoPlayer src={detectMediaUrl(text)!.url} />
+                ) : (
+                  <AudioPlayer src={detectMediaUrl(text)!.url} />
+                )
               )}
             </div>
           ))}
