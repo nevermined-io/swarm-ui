@@ -18,6 +18,9 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const { showReasoningCollapse } = useChat();
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
+  const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
+  const shouldShowCollapseButton = isReasoningGroup && messages.length > 1;
+
   const words = messages.map(m => m.content.split(" "));
 
   // Function to detect video URLs
@@ -107,8 +110,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     );
   }
 
-  const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -127,7 +128,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             : "text-card-foreground" // No background for answer messages
         )}
       >
-        {isReasoningGroup && showReasoningCollapse && (
+        {shouldShowCollapseButton && (
           <Button
             variant="ghost"
             size="sm"
