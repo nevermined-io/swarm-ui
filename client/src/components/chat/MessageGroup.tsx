@@ -42,7 +42,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
 
   useEffect(() => {
     let intervals: NodeJS.Timeout[] = [];
-    
+
     messages.forEach((message, messageIndex) => {
       if (!message.isUser) {
         let currentWordIndex = 0;
@@ -73,7 +73,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     });
 
     return () => intervals.forEach(clearInterval);
-  }, [messages]);
+  }, []);
 
   if (isCollapsed && isReasoningGroup) {
     return (
