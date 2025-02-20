@@ -53,13 +53,16 @@ export default function ChatContainer() {
           className={cn(
             "transition-all duration-300 ease-in-out",
             sidebarOpen ? "w-full md:w-64" : "w-0",
-            "absolute md:relative z-40 h-full bg-background"
+            "absolute md:relative z-40 h-full bg-background",
           )}
         >
           {sidebarOpen && (
             <div className="relative h-full">
               <Sidebar conversations={conversations} />
-              <Separator orientation="vertical" className="absolute right-0 top-0 h-full opacity-50 hidden md:block" />
+              <Separator
+                orientation="vertical"
+                className="absolute right-0 top-0 h-full opacity-50 hidden md:block"
+              />
               <Button
                 variant="ghost"
                 size="icon"
@@ -72,11 +75,13 @@ export default function ChatContainer() {
           )}
         </div>
 
-        <div className={cn(
-          "flex-1 flex flex-col bg-muted/80",
-          "transition-all duration-300 ease-in-out",
-          !sidebarOpen ? "w-full" : "hidden md:flex"
-        )}>
+        <div
+          className={cn(
+            "flex-1 flex flex-col bg-muted/80",
+            "transition-all duration-300 ease-in-out",
+            !sidebarOpen ? "w-full" : "hidden md:flex",
+          )}
+        >
           <div className="p-4 flex items-center bg-muted/80">
             {!sidebarOpen && (
               <Button
@@ -89,8 +94,8 @@ export default function ChatContainer() {
               </Button>
             )}
             {!isEmpty && (
-              <div className="text-lg font-semibold flex-1 text-center">
-                Video generator agent powered by Nevermined
+              <div className="text-lg font-semibold">
+                Video generator agent
               </div>
             )}
             <Avatar className="cursor-pointer ml-auto">

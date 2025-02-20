@@ -25,12 +25,14 @@ export default function ChatInput() {
       animate={{ y: 0 }}
       className={cn(
         "p-4 bg-muted/80",
-        isEmpty ? "h-[calc(100vh-64px)] flex flex-col items-center justify-center" : ""
+        isEmpty
+          ? "h-[calc(100vh-64px)] flex flex-col justify-center"
+          : "",
       )}
     >
       {isEmpty && (
-        <div className="mb-8 text-xl font-semibold text-center">
-          Video generator agent powered by Nevermined
+        <div className="mb-8 text-xl font-semibold w-full max-w-2xl mx-auto">
+          Video generator agent
         </div>
       )}
       <div className="relative w-full max-w-2xl mx-auto">
@@ -46,9 +48,9 @@ export default function ChatInput() {
             }
           }}
         />
-        <Button 
-          onClick={handleSubmit} 
-          size="icon" 
+        <Button
+          onClick={handleSubmit}
+          size="icon"
           variant="ghost"
           className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-background/50"
         >

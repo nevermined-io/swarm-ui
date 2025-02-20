@@ -16,34 +16,20 @@ export default function Sidebar({ conversations }: SidebarProps) {
       <div className="p-4 border-b">
         <div className="flex items-center gap-2">
           <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
+            width="33"
+            height="20"
+            viewBox="0 0 33 20"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
           >
             <path
-              d="M12 2L2 7L12 12L22 7L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+              d="M10.8683 19.9002L0 10.0011V0L10.8683 9.89908V19.9002Z"
+              fill="#ffffff"
+            ></path>
             <path
-              d="M2 17L12 22L22 17"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M2 12L12 17L22 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+              d="M21.7369 19.9002L10.8686 10.0011V0L21.7369 9.89908L32.404 0V10.0011L21.7369 19.9002Z"
+              fill="#ffffff"
+            ></path>
           </svg>
           <span className="font-semibold text-lg">Nevermined</span>
         </div>
@@ -59,7 +45,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
               onClick={() => setCurrentConversationId(conversation.id)}
               className={cn(
                 "w-full p-3 rounded-lg flex items-center gap-2 hover:bg-muted/50 transition-colors",
-                currentConversationId === conversation.id && "bg-muted/50"
+                currentConversationId === conversation.id && "bg-muted/50",
               )}
             >
               <MessageSquare className="w-4 h-4" />
