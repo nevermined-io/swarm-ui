@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useChat } from "@/lib/chat-context";
 import VideoPlayer from "./VideoPlayer";
 import AudioPlayer from "./AudioPlayer";
+import ImageGrid from "./ImageGrid";
 
 interface MessageGroupProps {
   messages: Message[];
@@ -30,18 +31,24 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   };
 
   // Function to detect media URLs
-  const detectMediaUrl = (text: string): { type: 'video' | 'audio', url: string } | null => {
+  const detectMediaUrl = (text: string): { type: 'video' | 'audio' | 'images', urls: string[] } | null => {
     const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
     const audioRegex = /https?:\/\/[^\s]+\.mp3\b/g;
+    const imageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)\b/g;
 
     const videoMatch = text.match(videoRegex);
     if (videoMatch) {
-      return { type: 'video', url: videoMatch[0] };
+      return { type: 'video', urls: [videoMatch[0]] };
     }
 
     const audioMatch = text.match(audioRegex);
     if (audioMatch) {
-      return { type: 'audio', url: audioMatch[0] };
+      return { type: 'audio', urls: [audioMatch[0]] };
+    }
+
+    const imageMatches = text.match(imageRegex);
+    if (imageMatches) {
+      return { type: 'images', urls: imageMatches };
     }
 
     return null;
@@ -158,18 +165,23 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           </Button>
         )}
         <div className="space-y-4">
-          {displayedMessages.map((text, index) => (
-            <div key={index}>
-              {text && createClickableLinks(text)}
-              {text && detectMediaUrl(text) && (
-                detectMediaUrl(text)?.type === 'video' ? (
-                  <VideoPlayer src={detectMediaUrl(text)!.url} />
-                ) : (
-                  <AudioPlayer src={detectMediaUrl(text)!.url} />
-                )
-              )}
-            </div>
-          ))}
+          {displayedMessages.map((text, index) => {
+            const mediaContent = text && detectMediaUrl(text);
+            return (
+              <div key={index}>
+                {text && createClickableLinks(text)}
+                {mediaContent?.type === 'video' && (
+                  <VideoPlayer src={mediaContent.urls[0]} />
+                )}
+                {mediaContent?.type === 'audio' && (
+                  <AudioPlayer src={mediaContent.urls[0]} />
+                )}
+                {mediaContent?.type === 'images' && (
+                  <ImageGrid images={mediaContent.urls} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       <div ref={messagesEndRef} />

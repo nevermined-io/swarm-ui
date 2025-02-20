@@ -9,44 +9,37 @@ interface MockResponse {
 
 const mockResponses: MockResponse[] = [
   { 
-    content: "I'm analyzing your request using the documentation at https://docs.example.com/analysis and cross-referencing with https://api.example.com/docs...", 
+    content: "I'm analyzing your request and gathering relevant visual examples...", 
     type: "reasoning",
-    delay: 1000 // Show after 1 second
+    delay: 1000
   },
   { 
-    content: "Checking multiple reliable sources including https://research.example.com/methods and https://data.example.com/validation...", 
+    content: "Processing multiple image sources and preparing the visual layout...", 
     type: "reasoning",
-    delay: 3000 // Show after 3 seconds
+    delay: 2000
   },
   { 
-    content: "Based on the findings from https://results.example.com/insights and https://metrics.example.com/analysis...", 
+    content: "Analyzing composition and aesthetic elements in the generated images...", 
     type: "reasoning",
-    delay: 5000 // Show after 5 seconds
+    delay: 3000
   },
   { 
-    content: "Here's what I found: The solution is available at https://solution.example.com/guide and you can find additional resources at https://resources.example.com/tutorial", 
+    content: `Here are some example images I've generated:
+
+https://v3.fal.media/files/koala/9SMgfGhSGfvX1EQn5mB-w.png
+https://v3.fal.media/files/kangaroo/TeoR3DPS_EbDpMR-jk7wE.png
+https://v3.fal.media/files/panda/85CanDFiF8oBVOVVg5SYc.png
+https://v3.fal.media/files/elephant/HQhOC153qLeoiPU9n_Qjt.png
+https://v3.fal.media/files/rabbit/sebaq6NPwXmMoGubDxoQ6.png
+https://v3.fal.media/files/rabbit/h9FZ4XaqqvrKoHcLPzGEe.png
+https://v3.fal.media/files/zebra/TvQZpdAO_skJbn0NQoqlg.png
+https://v3.fal.media/files/koala/_fC63XVgw6EmoWFKKtHbN.png
+https://v3.fal.media/files/kangaroo/2hzFUFYg0xRQ1BYr-GnMi.png
+https://v3.fal.media/files/elephant/qz285LaTtdG98b8dJKRaa.png
+https://v3.fal.media/files/rabbit/nfp94z2VN2asLOetX2spZ.png
+https://v3.fal.media/files/panda/TBdxoUGIoyba3_OnaNhPT.png`, 
     type: "answer",
-    delay: 7000 // Show after 7 seconds
-  },
-  {
-    content: "I've found an interesting audio clip about this topic: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3",
-    type: "answer",
-    delay: 9000
-  },
-  {
-    content: "Now I'm examining the visual aspects of blockchain technology...",
-    type: "reasoning",
-    delay: 11000
-  },
-  {
-    content: "Processing media resources and analyzing visual representations...",
-    type: "reasoning",
-    delay: 13000
-  },
-  {
-    content: "Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4",
-    type: "answer",
-    delay: 15000
+    delay: 4000
   }
 ];
 
