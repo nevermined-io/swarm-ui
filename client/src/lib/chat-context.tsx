@@ -4,18 +4,18 @@ import type { Message, Conversation } from "@shared/schema";
 interface MockResponse {
   content: string;
   type: "reasoning" | "answer";
-  delay: number; // delay in milliseconds before showing this message
+  delay: number; // this will be calculated cumulatively
 }
 
-const mockResponses: MockResponse[] = [
+// Base responses without delays
+const mockResponsesData: Omit<MockResponse, "delay">[] = [
   { 
     content: `I'm analyzing your request and gathering relevant visual examples...
 
 First, I'll examine the composition guidelines from https://design.nevermined.io/guidelines and cross-reference them with the latest visual trends documented at https://trends.nevermined.io/2025/visual-design.
 
 Based on these sources, I'll generate images that align with our brand identity while maintaining artistic coherence.`, 
-    type: "reasoning",
-    delay: 1000
+    type: "reasoning"
   },
   { 
     content: `Processing multiple image sources and preparing the visual layout...
@@ -26,8 +26,7 @@ The generation process involves several steps:
 3. Fine-tuning composition parameters
 
 You can learn more about our image generation process at https://docs.nevermined.io/image-generation.`, 
-    type: "reasoning",
-    delay: 2000
+    type: "reasoning"
   },
   { 
     content: `Analyzing composition and aesthetic elements in the generated images...
@@ -40,8 +39,7 @@ The results show strong alignment with our brand guidelines, particularly in ter
 - Visual hierarchy
 
 For more details about our evaluation process, visit https://evaluation.nevermined.io/process.`, 
-    type: "reasoning",
-    delay: 3000
+    type: "reasoning"
   },
   { 
     content: `Here are some example images I've generated:
@@ -62,8 +60,7 @@ https://v3.fal.media/files/panda/TBdxoUGIoyba3_OnaNhPT.png
 Each image has been optimized for web display. You can find our image optimization guidelines at https://optimization.nevermined.io/web-images.
 
 For high-resolution versions or different formats, please visit our media library at https://media.nevermined.io/library.`, 
-    type: "answer",
-    delay: 4000
+    type: "answer"
   },
   {
     content: `Now, let me fetch some audio examples for you...
@@ -74,8 +71,7 @@ I'm searching through our extensive audio database at https://audio.nevermined.i
 - Technical specifications
 
 The selection process is guided by our audio guidelines available at https://guidelines.nevermined.io/audio-production.`,
-    type: "reasoning",
-    delay: 6000
+    type: "reasoning"
   },
   {
     content: `I've found an interesting audio clip about this topic: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3
@@ -88,8 +84,7 @@ You can find more audio samples and related resources at:
 - https://sounds.nevermined.io/trending
 
 For technical specifications and usage guidelines, please refer to https://docs.nevermined.io/audio-usage.`,
-    type: "answer",
-    delay: 8000
+    type: "answer"
   },
   {
     content: `Let me also show you a video demonstration...
@@ -105,8 +100,7 @@ Our video selection follows strict guidelines for:
 - Visual consistency
 
 Learn more about our video standards at https://standards.nevermined.io/video.`,
-    type: "reasoning",
-    delay: 10000
+    type: "reasoning"
   },
   {
     content: `Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4
@@ -119,10 +113,25 @@ Additional resources and related content can be found at:
 - https://examples.nevermined.io/video-showcase
 
 For technical documentation and integration guides, visit https://docs.nevermined.io/video-integration.`,
-    type: "answer",
-    delay: 12000
+    type: "answer"
   }
 ];
+
+// Calculate delays based on content length and add them to the responses
+const mockResponses: MockResponse[] = mockResponsesData.map((response, index) => {
+  // Calculate cumulative delay based on all previous messages
+  const previousMessagesLength = mockResponsesData
+    .slice(0, index)
+    .reduce((total, msg) => total + msg.content.split(" ").length, 0);
+
+  // Base delay for each word (50ms) plus 1 second between messages
+  const cumulativeDelay = (previousMessagesLength * 50) + (index * 1000);
+
+  return {
+    ...response,
+    delay: cumulativeDelay
+  };
+});
 
 interface ChatContextType {
   messages: Message[];
@@ -164,7 +173,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Send messages with their respective delays
+    // Send messages with their respective cumulative delays
     mockResponses.forEach((response, index) => {
       setTimeout(() => {
         // If we're transitioning from reasoning to answer, show the collapse button
