@@ -30,7 +30,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-400 hover:underline"
+            className="font-semibold hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {part}

@@ -3,19 +3,19 @@ import type { Message, Conversation } from "@shared/schema";
 
 const mockResponses = [
   { 
-    content: "I'm analyzing your request to provide the most accurate information...", 
+    content: "I'm analyzing your request using the documentation at https://docs.example.com/analysis and cross-referencing with https://api.example.com/docs...", 
     type: "reasoning" 
   },
   { 
-    content: "Let me check multiple sources to ensure comprehensive coverage...", 
+    content: "Checking multiple reliable sources including https://research.example.com/methods and https://data.example.com/validation...", 
     type: "reasoning" 
   },
   { 
-    content: "Based on the available data and current context...", 
+    content: "Based on the findings from https://results.example.com/insights and https://metrics.example.com/analysis...", 
     type: "reasoning" 
   },
   { 
-    content: "Here's what I found: Check out this helpful resource at https://example.com/guide and this tutorial at https://example.com/tutorial", 
+    content: "Here's what I found: The solution is available at https://solution.example.com/guide and you can find additional resources at https://resources.example.com/tutorial", 
     type: "answer" 
   }
 ];
