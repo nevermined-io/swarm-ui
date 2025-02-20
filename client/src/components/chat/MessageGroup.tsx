@@ -19,23 +19,27 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const words = messages.map(m => m.content.split(" "));
 
-  // Function to convert URLs in text to clickable links
+  // Function to convert URLs in text to clickable links with anchor text
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.split(urlRegex).map((part, index) => {
-      if (part.match(urlRegex)) {
-        return (
-          <a
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {part}
-          </a>
-        );
+    let displayText = text;
+    const links: { url: string, text: string }[] = [];
+
+    // Extract URLs and create friendly names
+    text.match(urlRegex)?.forEach((url) => {
+      const domain = new URL(url).hostname.replace('www.', '');
+      const section = new URL(url).pathname.split('/')[1] || '';
+      const friendlyName = `${domain}${section ? `/${section}` : ''}`;
+      displayText = displayText.replace(url, friendlyName);
+      links.push({ url, text: friendlyName });
+    });
+
+    // Replace URLs with anchor tags
+    return links.reduce((acc, { url, text }) => {
+      return acc.replace(text, `<a href="${url}" target="_blank" rel="noopener noreferrer" class="font-semibold hover:underline">${text}</a>`);
+    }, displayText).split(/(https?:\/\/[^\s]+)/).map((part, index) => {
+      if (part.startsWith('<a')) {
+        return <span key={index} dangerouslySetInnerHTML={{ __html: part }} onClick={(e) => e.stopPropagation()} />;
       }
       return part;
     });
@@ -43,7 +47,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
 
   useEffect(() => {
     async function typeMessages() {
-      // Start from the last typed message
       for (let messageIndex = typedMessagesCount.current; messageIndex < messages.length; messageIndex++) {
         const message = messages[messageIndex];
         if (!message.isUser) {
@@ -69,7 +72,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     }
 
     typeMessages();
-  }, [messages.length]); // Only re-run when new messages are added
+  }, [messages.length]);
 
   if (isCollapsed && isReasoningGroup) {
     return (
@@ -85,23 +88,24 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     );
   }
 
+  const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "max-w-[80%]",
-        messages[0].isUser ? "ml-auto" : "mr-auto"
+        messages[0].isUser ? "ml-auto max-w-[80%]" : isAnswerGroup ? "w-full" : "mr-auto max-w-[80%]"
       )}
     >
       <div
         className={cn(
-          "rounded-lg p-4",
+          "p-4",
           messages[0].isUser
-            ? "bg-primary text-primary-foreground"
+            ? "bg-primary text-primary-foreground rounded-lg"
             : messages[0].type === "reasoning"
-            ? "bg-muted text-muted-foreground"
-            : "bg-card text-card-foreground"
+            ? "bg-muted text-muted-foreground rounded-lg"
+            : "text-card-foreground" // No background for answer messages
         )}
       >
         {isReasoningGroup && showReasoningCollapse && (
