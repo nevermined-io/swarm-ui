@@ -3,6 +3,7 @@ import { MessageSquare } from "lucide-react";
 import { Conversation } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/lib/chat-context";
+import { format } from "date-fns";
 
 interface SidebarProps {
   conversations: Conversation[];
@@ -44,12 +45,17 @@ export default function Sidebar({ conversations }: SidebarProps) {
               key={conversation.id}
               onClick={() => setCurrentConversationId(conversation.id)}
               className={cn(
-                "w-full p-3 rounded-lg flex items-center gap-2 hover:bg-muted/50 transition-colors",
-                currentConversationId === conversation.id && "bg-muted/50",
+                "w-full p-3 rounded-lg flex flex-col items-start gap-1 hover:bg-muted/50 transition-colors text-left",
+                currentConversationId === conversation.id && "bg-muted/50"
               )}
             >
-              <MessageSquare className="w-4 h-4" />
-              <span className="text-sm truncate">{conversation.title}</span>
+              <div className="flex items-center gap-2 w-full">
+                <MessageSquare className="w-4 h-4 shrink-0" />
+                <span className="text-sm font-medium truncate">{conversation.title}</span>
+              </div>
+              <span className="text-xs text-muted-foreground pl-6">
+                {format(new Date(conversation.timestamp), "MMM d, yyyy 'at' h:mm a")}
+              </span>
             </button>
           ))}
         </div>
