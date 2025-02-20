@@ -5,8 +5,8 @@ import ChatInput from "./ChatInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, ArrowDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Footer from "./Footer";
@@ -21,37 +21,12 @@ export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
     const isMobile = window.innerWidth < 768; // md breakpoint
     setSidebarOpen(!isMobile);
   }, []);
-
-  const handleScroll = (e: Event) => {
-    const target = e.target as HTMLDivElement;
-    const isAtBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
-    setShowScrollButton(!isAtBottom);
-  };
-
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollArea = scrollAreaRef.current;
-      scrollArea.scrollTo({
-        top: scrollArea.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (!isEmpty) {
-      scrollToBottom();
-    }
-  }, [messages]);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
@@ -130,28 +105,13 @@ export default function ChatContainer() {
           </div>
 
           {!isEmpty && (
-            <div className="relative flex-1">
-              <ScrollArea 
-                className="h-full p-4" 
-                onScroll={handleScroll}
-                ref={scrollAreaRef}
-              >
-                <div className="space-y-4">
-                  {messageGroups.map((group, index) => (
-                    <MessageGroup key={index} messages={group} />
-                  ))}
-                </div>
-              </ScrollArea>
-              {showScrollButton && (
-                <Button
-                  size="icon"
-                  className="absolute bottom-4 right-4 rounded-full shadow-lg"
-                  onClick={scrollToBottom}
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {messageGroups.map((group, index) => (
+                  <MessageGroup key={index} messages={group} />
+                ))}
+              </div>
+            </ScrollArea>
           )}
 
           <ChatInput />
