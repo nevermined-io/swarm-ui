@@ -69,7 +69,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
       links.push({ url, text: friendlyName });
     });
 
-    // Split text by link placeholders and create elements
+    // Split text by link placeholders and process line breaks
     return displayText.split(/(\[\[LINK:[^:]+:[^\]]+\]\])/).map((part, index) => {
       const linkMatch = part.match(/\[\[LINK:([^:]+):([^\]]+)\]\]/);
       if (linkMatch) {
@@ -87,7 +87,13 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           </a>
         );
       }
-      return part;
+      // Replace line breaks with <br /> elements and preserve whitespace
+      return part.split('\n').map((line, i) => (
+        <span key={`${index}-${i}`}>
+          {line}
+          {i < part.split('\n').length - 1 && <br />}
+        </span>
+      ));
     });
   };
 
@@ -146,7 +152,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     >
       <div
         className={cn(
-          "p-4",
+          "p-4 whitespace-pre-line",
           messages[0].isUser
             ? "bg-primary text-primary-foreground rounded-lg"
             : messages[0].type === "reasoning"
@@ -169,7 +175,9 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             const mediaContent = text && detectMediaUrl(text);
             return (
               <div key={index}>
-                {text && createClickableLinks(text)}
+                <div className="whitespace-pre-line">
+                  {text && createClickableLinks(text)}
+                </div>
                 {mediaContent?.type === 'video' && (
                   <VideoPlayer src={mediaContent.urls[0]} />
                 )}
