@@ -40,6 +40,26 @@ https://v3.fal.media/files/rabbit/nfp94z2VN2asLOetX2spZ.png
 https://v3.fal.media/files/panda/TBdxoUGIoyba3_OnaNhPT.png`, 
     type: "answer",
     delay: 4000
+  },
+  {
+    content: "Now, let me fetch some audio examples for you...",
+    type: "reasoning",
+    delay: 6000
+  },
+  {
+    content: "I've found an interesting audio clip about this topic: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3",
+    type: "answer",
+    delay: 8000
+  },
+  {
+    content: "Let me also show you a video demonstration...",
+    type: "reasoning",
+    delay: 10000
+  },
+  {
+    content: "Here's a fascinating video that illustrates the concepts: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4",
+    type: "answer",
+    delay: 12000
   }
 ];
 
@@ -102,7 +122,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, agentMessage]);
-      }, response.delay); // Use the specified delay for each message
+      }, response.delay);
     });
   };
 
