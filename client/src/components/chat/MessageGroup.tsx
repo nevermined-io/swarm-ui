@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Message } from "@shared/schema";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useChat } from "@/lib/chat-context";
 
 interface MessageGroupProps {
   messages: Message[];
@@ -12,8 +13,8 @@ interface MessageGroupProps {
 export default function MessageGroup({ messages }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showCollapseButton, setShowCollapseButton] = useState(false);
   const typedMessagesCount = useRef(0);
+  const { showReasoningCollapse } = useChat();
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const words = messages.map(m => m.content.split(" "));
@@ -56,11 +57,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             });
           }
           typedMessagesCount.current = messageIndex + 1;
-
-          // Only show collapse button when all reasoning messages are typed
-          if (isReasoningGroup && messageIndex === messages.length - 1) {
-            setShowCollapseButton(true);
-          }
         } else {
           setDisplayedMessages(prev => {
             const newMessages = [...prev];
@@ -108,7 +104,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             : "bg-card text-card-foreground"
         )}
       >
-        {isReasoningGroup && showCollapseButton && (
+        {isReasoningGroup && showReasoningCollapse && (
           <Button
             variant="ghost"
             size="sm"

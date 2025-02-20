@@ -24,6 +24,7 @@ interface ChatContextType {
   messages: Message[];
   conversations: Conversation[];
   currentConversationId: number | null;
+  showReasoningCollapse: boolean;
   sendMessage: (content: string) => void;
   setCurrentConversationId: (id: number) => void;
 }
@@ -34,6 +35,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
 
   const sendMessage = (content: string) => {
     const userMessage: Message = {
@@ -46,6 +48,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setShowReasoningCollapse(false);
 
     if (!currentConversationId) {
       const newConversation: Conversation = {
@@ -60,6 +63,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     // Send messages sequentially
     mockResponses.forEach((response, index) => {
       setTimeout(() => {
+        // If we're transitioning from reasoning to answer, show the collapse button
+        if (index > 0 && 
+            mockResponses[index - 1].type === "reasoning" && 
+            response.type === "answer") {
+          setShowReasoningCollapse(true);
+        }
+
         const agentMessage: Message = {
           id: messages.length + index + 1,
           content: response.content,
@@ -79,6 +89,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         messages,
         conversations,
         currentConversationId,
+        showReasoningCollapse,
         sendMessage,
         setCurrentConversationId,
       }}
