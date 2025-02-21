@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown, Settings, HelpCircle, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Settings, HelpCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Footer from "./Footer";
@@ -23,107 +23,17 @@ import Logo from "./Logo";
 interface Message {
   type: string;
   isUser: boolean;
-  // ... other message properties
 }
 
 export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isGeneratingText, setIsGeneratingText] = useState(false);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<number>();
-
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
-      const scrollHeight = scrollArea.scrollHeight;
-      scrollArea.scrollTo({
-        top: scrollHeight,
-        behavior,
-      });
-    }
-  };
-
-  const handleScroll = () => {
-    const scrollArea = scrollAreaRef.current;
-    if (!scrollArea || isGeneratingText) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-
-    // Only set userHasScrolled if they've scrolled up manually
-    if (distanceFromBottom > 100 && !userHasScrolled) {
-      setUserHasScrolled(true);
-    }
-
-    // If they've scrolled back to bottom, reset userHasScrolled
-    if (distanceFromBottom < 50) {
-      setUserHasScrolled(false);
-    }
-  };
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
     setSidebarOpen(!isMobile);
-  }, []);
-
-  // Set up scroll listener
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
-      scrollArea.addEventListener('scroll', handleScroll, { passive: true });
-      return () => scrollArea.removeEventListener('scroll', handleScroll);
-    }
-  }, [isGeneratingText]);
-
-  // Track text generation state by observing message content changes
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-
-      if (!lastMessage.isUser) {
-        setIsGeneratingText(true);
-
-        // Clear any existing timeout
-        if (scrollTimeoutRef.current) {
-          window.clearTimeout(scrollTimeoutRef.current);
-        }
-
-        // Set a timeout to detect when text generation is complete
-        scrollTimeoutRef.current = window.setTimeout(() => {
-          setIsGeneratingText(false);
-          setUserHasScrolled(false); // Reset on completion
-        }, 1000); // Adjust timing based on your word-by-word animation speed
-      }
-    }
-
-    return () => {
-      if (scrollTimeoutRef.current) {
-        window.clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, [messages]);
-
-  // Handle auto-scrolling
-  useEffect(() => {
-    if (messages.length > 0) {
-      if (isGeneratingText && !userHasScrolled) {
-        // Always scroll while generating text unless user has manually scrolled up
-        scrollToBottom();
-      } else if (!isGeneratingText && !userHasScrolled) {
-        // Scroll to bottom when generation completes if user hasn't scrolled up
-        scrollToBottom();
-      }
-    }
-  }, [messages, isGeneratingText, userHasScrolled]);
-
-  // Initial scroll to bottom
-  useEffect(() => {
-    scrollToBottom('instant');
   }, []);
 
   // Group messages by type sequences
@@ -229,10 +139,7 @@ export default function ChatContainer() {
         <div className="flex-1 overflow-hidden relative">
           {!isEmpty && (
             <div className="h-full">
-              <div
-                ref={scrollAreaRef}
-                className="h-full px-4 overflow-y-auto"
-              >
+              <div className="h-full px-4 overflow-y-auto">
                 <div className="space-y-4 pb-12">
                   {messageGroups.map((group, index) => (
                     <MessageGroup
@@ -241,9 +148,7 @@ export default function ChatContainer() {
                       isFirstGroup={index === 0}
                     />
                   ))}
-                  <div ref={lastMessageRef} />
                 </div>
-                {/* showScrollButton is removed because of smarter auto-scroll */}
               </div>
             </div>
           )}
