@@ -150,9 +150,7 @@ Based on these sources, I'll generate images that align with our brand identity 
     type: "reasoning"
   },
   {
-    content: `Purchasing agent credits for this generation...
-
-I just bought 100 song generator agent credits for 2 $USDC. Tx: 0x637ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ee`,
+    content: `2 $USDC Tx: 0x637ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ee`,
     type: "transaction"
   },
   { 
@@ -167,9 +165,7 @@ You can learn more about our image generation process at https://docs.nevermined
     type: "reasoning"
   },
   {
-    content: `Acquiring additional rendering credits...
-
-I just purchased 50 high-quality rendering credits for 1.5 $USDC. Tx: 0x937ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ff`,
+    content: `1.5 $USDC Tx: 0x937ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ff`,
     type: "transaction"
   },
   { 
