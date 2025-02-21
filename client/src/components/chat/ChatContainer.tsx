@@ -1,12 +1,20 @@
+import { Switch, Route } from "wouter";
 import { useChat } from "@/lib/chat-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MessageGroup from "./MessageGroup";
 import ChatInput from "./ChatInput";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Settings, HelpCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Footer from "./Footer";
@@ -173,25 +181,45 @@ export default function ChatContainer() {
           </div>
           <div className="flex items-center gap-4">
             {!sidebarOpen && <Logo />}
-            <Avatar className="cursor-pointer">
-              <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer border-2 border-primary/10 hover:border-primary/20 transition-colors">
+                  <AvatarFallback className="bg-primary/5">
+                    <Settings className="h-4 w-4 text-primary/70" />
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="cursor-pointer">
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Help
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         <div className="flex-1 overflow-hidden relative">
           {!isEmpty && (
             <div className="h-full">
-              <div 
+              <div
                 ref={scrollAreaRef}
                 className="h-full px-4 overflow-y-auto"
               >
                 <div className="space-y-4 pb-12">
                   {messageGroups.map((group, index) => (
-                    <MessageGroup 
-                      key={index} 
-                      messages={group} 
+                    <MessageGroup
+                      key={index}
+                      messages={group}
                       isFirstGroup={index === 0}
                     />
                   ))}
