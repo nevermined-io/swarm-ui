@@ -30,13 +30,6 @@ export default function ChatInput() {
           : "",
       )}
     >
-      {isEmpty && (
-        <div className="mb-4 text-center space-y-2 w-full max-w-2xl mx-auto">
-          <p className="text-muted-foreground">
-            Describe your music video idea, and I'll help you create it using advanced AI generation techniques.
-          </p>
-        </div>
-      )}
       <div className="relative w-full max-w-2xl mx-auto">
         <Textarea
           value={input}
@@ -59,6 +52,13 @@ export default function ChatInput() {
           <Send className="w-4 h-4" />
         </Button>
       </div>
+      {isEmpty && (
+        <div className="mt-4 text-center w-full max-w-2xl mx-auto">
+          <p className="text-xs text-muted-foreground">
+            Describe your music video idea, and I'll help you create it using advanced AI generation techniques.
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 }
