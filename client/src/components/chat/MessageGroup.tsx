@@ -166,7 +166,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
         className={cn(
           "p-4 whitespace-pre-line",
           messages[0].isUser
-            ? "bg-primary text-primary-foreground rounded-lg"
+            ? "user-message bg-primary text-primary-foreground rounded-lg"
             : messages[0].type === "reasoning"
             ? "bg-muted text-muted-foreground rounded-lg"
             : "text-card-foreground" // No background for answer messages

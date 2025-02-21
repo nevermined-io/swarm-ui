@@ -65,13 +65,13 @@ export default function ChatContainer() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col">
-      <div className="flex flex-1 min-h-0 relative">
+    <div className="flex flex-col min-h-screen bg-background overflow-hidden">
+      <div className="flex flex-1 relative">
         <div
           className={cn(
             "transition-all duration-300 ease-in-out",
             sidebarOpen ? "w-full md:w-64" : "w-0",
-            "absolute md:relative z-40 h-full bg-background",
+            "absolute md:relative z-40 h-full",
           )}
         >
           {sidebarOpen && (
@@ -95,12 +95,12 @@ export default function ChatContainer() {
 
         <div
           className={cn(
-            "flex-1 flex flex-col bg-muted/80",
+            "flex-1 flex flex-col bg-background",
             "transition-all duration-300 ease-in-out",
             !sidebarOpen ? "w-full" : "hidden md:flex",
           )}
         >
-          <div className="p-4 flex items-center bg-muted/80">
+          <div className="p-4 flex items-center bg-muted/80 border-b">
             {!sidebarOpen && (
               <Button
                 variant="ghost"
@@ -122,39 +122,39 @@ export default function ChatContainer() {
             </Avatar>
           </div>
 
-          {!isEmpty && (
-            <div className="relative flex-1">
-              <ScrollArea
-                className="h-full p-4"
-                onScroll={handleScroll}
-                ref={scrollAreaRef}
-              >
-                <div className="space-y-4">
-                  {messageGroups.map((group, index) => (
-                    <MessageGroup key={index} messages={group} />
-                  ))}
-                </div>
-              </ScrollArea>
-              {showScrollButton && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg"
-                  onClick={scrollToBottom}
+          <div className="flex-1 overflow-hidden">
+            {!isEmpty && (
+              <div className="relative h-full">
+                <ScrollArea
+                  className="h-full p-4"
+                  onScroll={handleScroll}
+                  ref={scrollAreaRef}
                 >
-                  <ChevronDown className="h-4 w-4" />
-                  Scroll to bottom
-                </Button>
-              )}
-            </div>
-          )}
+                  <div className="space-y-4">
+                    {messageGroups.map((group, index) => (
+                      <MessageGroup key={index} messages={group} />
+                    ))}
+                  </div>
+                </ScrollArea>
+                {showScrollButton && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg"
+                    onClick={scrollToBottom}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                    Scroll to bottom
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
 
           <ChatInput />
         </div>
       </div>
-      <div className="relative z-50">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }
