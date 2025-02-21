@@ -65,7 +65,7 @@ export default function ChatContainer() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background relative">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <div
         className={cn(
@@ -85,7 +85,7 @@ export default function ChatContainer() {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 md:right-2"
+              className="absolute top-4 right-4 md:right-2 text-sidebar-foreground hover:bg-sidebar-accent"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -123,15 +123,15 @@ export default function ChatContainer() {
           </Avatar>
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
           {!isEmpty && (
-            <div className="relative h-full">
+            <div className="h-full">
               <ScrollArea
                 className="h-full p-4"
                 onScroll={handleScroll}
                 ref={scrollAreaRef}
               >
-                <div className="space-y-4">
+                <div className="space-y-4 pb-16">
                   {messageGroups.map((group, index) => (
                     <MessageGroup key={index} messages={group} />
                   ))}
@@ -141,7 +141,7 @@ export default function ChatContainer() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg"
+                  className="fixed bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-50"
                   onClick={scrollToBottom}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -156,9 +156,9 @@ export default function ChatContainer() {
       </div>
 
       {/* Fixed Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
+      <footer className="fixed bottom-0 left-0 right-0">
         <Footer />
-      </div>
+      </footer>
     </div>
   );
 }
