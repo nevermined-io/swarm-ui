@@ -40,9 +40,9 @@ const storedMessages: Record<number, Message[]> = {
     {
       id: 2,
       content: `Let me analyze your video generation request...
-
+      
 I'll be following our standard process documented at https://video.nevermined.io/process and using our latest rendering technology described at https://tech.nevermined.io/video-render.
-
+      
 Key aspects we'll consider:
 - Resolution and format requirements
 - Processing optimization
@@ -55,7 +55,7 @@ Key aspects we'll consider:
     {
       id: 3,
       content: `Here's a sample video demonstrating our capabilities: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/blockchain_dreams_of_a_young_entrepreneur.mp4
-
+      
 This was created using our advanced generation pipeline. You can find more examples in our gallery at https://gallery.nevermined.io/videos`,
       type: "answer",
       isUser: false,
@@ -75,9 +75,9 @@ This was created using our advanced generation pipeline. You can find more examp
     {
       id: 5,
       content: `Analyzing audio processing requirements...
-
+      
 I'll be using our audio processing framework detailed at https://audio.nevermined.io/processing and following best practices from https://best-practices.nevermined.io/audio.
-
+      
 Our focus areas include:
 - Sound quality optimization
 - Noise reduction
@@ -90,7 +90,7 @@ Our focus areas include:
     {
       id: 6,
       content: `Here's a processed audio sample: https://cdnc.ttapi.io/2025-02-19/3f8b0ffe-c90b-4de0-8e46-ed6929bb323d.mp3
-
+      
 This demonstrates our high-quality audio processing capabilities. More examples can be found at https://samples.nevermined.io/audio`,
       type: "answer",
       isUser: false,
@@ -110,9 +110,9 @@ This demonstrates our high-quality audio processing capabilities. More examples 
     {
       id: 8,
       content: `Initiating image generation process...
-
+      
 I'm following our image generation guidelines from https://images.nevermined.io/guidelines and using our latest models described at https://models.nevermined.io/image-gen.
-
+      
 We'll focus on:
 - Composition quality
 - Style consistency
@@ -125,11 +125,11 @@ We'll focus on:
     {
       id: 9,
       content: `Here are some generated images:
-
+      
 https://v3.fal.media/files/koala/9SMgfGhSGfvX1EQn5mB-w.png
 https://v3.fal.media/files/kangaroo/TeoR3DPS_EbDpMR-jk7wE.png
 https://v3.fal.media/files/panda/85CanDFiF8oBVOVVg5SYc.png
-
+      
 You can find more examples in our gallery at https://gallery.nevermined.io/images`,
       type: "answer",
       isUser: false,
@@ -270,32 +270,48 @@ interface ChatContextType {
   conversations: Conversation[];
   currentConversationId: number | null;
   showReasoningCollapse: boolean;
+  isStoredConversation: boolean;
   sendMessage: (content: string) => void;
-  setCurrentConversationId: (id: number) => void;
+  setCurrentConversationId: (id: number | null) => void;
+  startNewConversation: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>(storedConversations);
+  const [conversations, setConversations] = useState<Conversation[]>(
+    [...storedConversations].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+  );
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
+  const [isStoredConversation, setIsStoredConversation] = useState(false);
 
   const loadStoredMessages = (conversationId: number) => {
     const storedConversationMessages = storedMessages[conversationId];
     if (storedConversationMessages) {
       setMessages(storedConversationMessages);
       setShowReasoningCollapse(false);
+      setIsStoredConversation(true);
     }
   };
 
-  const handleSetCurrentConversationId = (id: number) => {
+  const handleSetCurrentConversationId = (id: number | null) => {
     setCurrentConversationId(id);
-    loadStoredMessages(id);
+    if (id !== null) {
+      loadStoredMessages(id);
+    } else {
+      setMessages([]);
+      setIsStoredConversation(false);
+    }
+  };
+
+  const startNewConversation = () => {
+    handleSetCurrentConversationId(null);
   };
 
   const sendMessage = (content: string) => {
+    setIsStoredConversation(false);
     const userMessage: Message = {
       id: messages.length,
       content,
@@ -314,14 +330,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         title: content.slice(0, 30) + "...",
         timestamp: new Date(),
       };
-      setConversations((prev) => [...prev, newConversation]);
+      setConversations((prev) => [newConversation, ...prev]); 
       setCurrentConversationId(newConversation.id);
     }
 
     // Send messages with their respective cumulative delays
     mockResponses.forEach((response, index) => {
       setTimeout(() => {
-        // If we're transitioning from reasoning to answer, show the collapse button
         if (index > 0 && 
             mockResponses[index - 1].type === "reasoning" && 
             response.type === "answer") {
@@ -348,8 +363,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         conversations,
         currentConversationId,
         showReasoningCollapse,
+        isStoredConversation,
         sendMessage,
         setCurrentConversationId: handleSetCurrentConversationId,
+        startNewConversation,
       }}
     >
       {children}

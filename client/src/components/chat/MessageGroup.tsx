@@ -14,24 +14,60 @@ interface MessageGroupProps {
 }
 
 export default function MessageGroup({ messages }: MessageGroupProps) {
-  const [displayedMessages, setDisplayedMessages] = useState<string[]>(messages.map(m => m.content));
+  const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { showReasoningCollapse } = useChat();
+  const typedMessagesCount = useRef(0);
+  const { showReasoningCollapse, isStoredConversation } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
   const shouldShowCollapseButton = isReasoningGroup && messages.length > 1;
 
+  const words = messages.map(m => m.content.split(" "));
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    // Update displayed messages when messages prop changes
-    setDisplayedMessages(messages.map(m => m.content));
-    scrollToBottom();
-  }, [messages]);
+    // If it's a stored conversation, show all messages immediately
+    if (isStoredConversation) {
+      setDisplayedMessages(messages.map(m => m.content));
+      scrollToBottom();
+      return;
+    }
+
+    // For new messages, animate them word by word
+    async function typeMessages() {
+      for (let messageIndex = typedMessagesCount.current; messageIndex < messages.length; messageIndex++) {
+        const message = messages[messageIndex];
+        if (!message.isUser) {
+          const messageWords = words[messageIndex];
+          for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            setDisplayedMessages(prev => {
+              const newMessages = [...prev];
+              newMessages[messageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
+              return newMessages;
+            });
+            scrollToBottom();
+          }
+          typedMessagesCount.current = messageIndex + 1;
+        } else {
+          setDisplayedMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[messageIndex] = message.content;
+            return newMessages;
+          });
+          typedMessagesCount.current = messageIndex + 1;
+          scrollToBottom();
+        }
+      }
+    }
+
+    typeMessages();
+  }, [messages, isStoredConversation]);
 
   // Function to detect media URLs
   const detectMediaUrl = (text: string): { type: 'video' | 'audio' | 'images', urls: string[] } | null => {
@@ -57,7 +93,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     return null;
   };
 
-  // Function to convert URLs in text to clickable links with anchor text
+  // Function to convert URLs in text to clickable links
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     let displayText = text;

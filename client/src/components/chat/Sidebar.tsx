@@ -1,16 +1,17 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Plus } from "lucide-react";
 import { Conversation } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/lib/chat-context";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   conversations: Conversation[];
 }
 
 export default function Sidebar({ conversations }: SidebarProps) {
-  const { currentConversationId, setCurrentConversationId } = useChat();
+  const { currentConversationId, setCurrentConversationId, startNewConversation } = useChat();
 
   return (
     <div className="w-64 bg-background">
@@ -35,8 +36,16 @@ export default function Sidebar({ conversations }: SidebarProps) {
           <span className="font-semibold text-lg">Nevermined</span>
         </div>
       </div>
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex justify-between items-center">
         <h2 className="font-semibold text-sm">Conversations</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={startNewConversation}
+          className="h-6 w-6"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
       <ScrollArea className="h-[calc(100vh-140px)]">
         <div className="p-2 space-y-2">
