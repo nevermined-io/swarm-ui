@@ -79,7 +79,7 @@ export default function ChatContainer() {
             <Sidebar conversations={conversations} />
             <Separator
               orientation="vertical"
-              className="absolute right-0 top-0 h-full opacity-50 hidden md:block"
+              className="absolute right-0 top-0 h-full opacity-30 hidden md:block"
             />
             <Button
               variant="ghost"
@@ -131,7 +131,7 @@ export default function ChatContainer() {
                 onScroll={handleScroll}
                 ref={scrollAreaRef}
               >
-                <div className="space-y-4 pb-16">
+                <div className="space-y-4 pb-20">
                   {messageGroups.map((group, index) => (
                     <MessageGroup key={index} messages={group} />
                   ))}
@@ -141,7 +141,7 @@ export default function ChatContainer() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="fixed bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-50"
+                  className="fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-[100]"
                   onClick={scrollToBottom}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -156,7 +156,7 @@ export default function ChatContainer() {
       </div>
 
       {/* Fixed Footer */}
-      <footer className="fixed bottom-0 left-0 right-0">
+      <footer className="fixed bottom-0 left-0 right-0 bg-background">
         <Footer />
       </footer>
     </div>
