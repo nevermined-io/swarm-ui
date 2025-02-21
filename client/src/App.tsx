@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Chat from "@/pages/chat";
 import { ChatProvider } from "@/lib/chat-context";
+import { ThemeProvider } from "@/lib/theme-context";
 
 function Router() {
   return (
@@ -18,10 +19,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ChatProvider>
-        <Router />
-        <Toaster />
-      </ChatProvider>
+      <ThemeProvider>
+        <ChatProvider>
+          <Router />
+          <Toaster />
+        </ChatProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

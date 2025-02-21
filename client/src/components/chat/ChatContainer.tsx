@@ -35,9 +35,11 @@ export default function ChatContainer() {
     const target = event.target as HTMLDivElement;
     const { scrollTop, scrollHeight, clientHeight } = target;
 
-    // Enable auto-scroll only when we're very close to the bottom (within 10px)
-    const isNearBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 10;
-    setAutoScroll(isNearBottom);
+    // Only enable auto-scroll when we're very close to the bottom (within 10px)
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 10;
+    if (isNearBottom !== autoScroll) {
+      setAutoScroll(isNearBottom);
+    }
   };
 
   // Scroll to bottom if auto-scroll is enabled
@@ -50,8 +52,11 @@ export default function ChatContainer() {
 
   // Watch messages and scroll when they change
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Only scroll if we're already at the bottom
+    if (autoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, autoScroll]);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
