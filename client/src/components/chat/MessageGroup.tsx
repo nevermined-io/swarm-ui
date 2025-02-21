@@ -11,13 +11,13 @@ import ImageGrid from "./ImageGrid";
 
 interface MessageGroupProps {
   messages: Message[];
+  autoScroll: boolean;
 }
 
-export default function MessageGroup({ messages }: MessageGroupProps) {
+export default function MessageGroup({ messages, autoScroll }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const typedMessagesCount = useRef(0);
-  const [autoScroll, setAutoScroll] = useState(true);
   const { showReasoningCollapse, isStoredConversation } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedIds = useRef(new Set<number>());
@@ -29,26 +29,10 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const words = messages.map(m => m.content.split(" "));
 
   const scrollToBottom = () => {
-    if (autoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
-
-  // Handle scroll events
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = document.documentElement.scrollTop;
-      const clientHeight = document.documentElement.clientHeight;
-
-      // If we're near the bottom (within 100px), enable auto-scroll
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setAutoScroll(isNearBottom);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     // If it's a stored conversation, show all messages immediately
@@ -101,7 +85,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     }
 
     typeMessages();
-  }, [messages, isStoredConversation]);
+  }, [messages, isStoredConversation, autoScroll]);
 
   const detectMediaUrl = (text: string): { type: 'video' | 'audio' | 'images', urls: string[] } | null => {
     const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;

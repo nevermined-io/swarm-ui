@@ -5,7 +5,7 @@ import ChatInput from "./ChatInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,12 +21,37 @@ export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
     const isMobile = window.innerWidth < 768; // md breakpoint
     setSidebarOpen(!isMobile);
   }, []);
+
+  // Handle scroll within ScrollArea
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    const { scrollTop, scrollHeight, clientHeight } = target;
+
+    // Enable auto-scroll only when we're very close to the bottom (within 10px)
+    const isNearBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 10;
+    setAutoScroll(isNearBottom);
+  };
+
+  // Scroll to bottom if auto-scroll is enabled
+  const scrollToBottom = () => {
+    if (autoScroll && scrollAreaRef.current) {
+      const scrollArea = scrollAreaRef.current;
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+    }
+  };
+
+  // Watch messages and scroll when they change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
@@ -105,10 +130,14 @@ export default function ChatContainer() {
           </div>
 
           {!isEmpty && (
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea
+              className="flex-1 p-4"
+              onScroll={handleScroll}
+              ref={scrollAreaRef}
+            >
               <div className="space-y-4">
                 {messageGroups.map((group, index) => (
-                  <MessageGroup key={index} messages={group} />
+                  <MessageGroup key={index} messages={group} autoScroll={autoScroll} />
                 ))}
               </div>
             </ScrollArea>

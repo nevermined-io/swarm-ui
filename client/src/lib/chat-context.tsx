@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useRef, useEffect } from "react";
 import type { Message, Conversation } from "@shared/schema";
 
 interface MockResponse {
@@ -286,10 +286,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
   const [isStoredConversation, setIsStoredConversation] = useState(false);
+  const timeoutsRef = useRef<number[]>([]);
+
+  // Clear all pending timeouts
+  const clearPendingTimeouts = () => {
+    timeoutsRef.current.forEach(timeoutId => window.clearTimeout(timeoutId));
+    timeoutsRef.current = [];
+  };
 
   const loadStoredMessages = (conversationId: number) => {
     const storedConversationMessages = storedMessages[conversationId];
     if (storedConversationMessages) {
+      clearPendingTimeouts(); // Clear any pending message generation
       setMessages(storedConversationMessages);
       setShowReasoningCollapse(false);
       setIsStoredConversation(true);
@@ -297,6 +305,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSetCurrentConversationId = (id: number | null) => {
+    clearPendingTimeouts(); // Clear pending messages when switching conversations
     setCurrentConversationId(id);
     if (id !== null) {
       loadStoredMessages(id);
@@ -311,6 +320,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const sendMessage = (content: string) => {
+    clearPendingTimeouts(); // Clear any pending messages before starting new ones
     setIsStoredConversation(false);
     const userMessage: Message = {
       id: messages.length,
@@ -336,7 +346,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     // Send messages with their respective cumulative delays
     mockResponses.forEach((response, index) => {
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         if (index > 0 && 
             mockResponses[index - 1].type === "reasoning" && 
             response.type === "answer") {
@@ -353,8 +363,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         };
         setMessages((prev) => [...prev, agentMessage]);
       }, response.delay);
+
+      timeoutsRef.current.push(timeoutId);
     });
   };
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => clearPendingTimeouts();
+  }, []);
 
   return (
     <ChatContext.Provider
