@@ -105,9 +105,26 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
     const links: { url: string; text: string }[] = [];
 
     text.match(urlRegex)?.forEach((url) => {
-      const domain = new URL(url).hostname.replace('www.', '');
-      const section = new URL(url).pathname.split('/')[1] || '';
-      const friendlyName = `${domain}${section ? `/${section}` : ''}`;
+      const urlObj = new URL(url);
+      let friendlyName = '';
+
+      // Check if it's a media file
+      if (url.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
+        const fileName = urlObj.pathname.split('/').pop() || '';
+        const fileType = fileName.split('.').pop()?.toUpperCase() || '';
+        // Create a more readable name from the filename
+        const nameWithoutExtension = fileName.split('.')[0]
+          .replace(/[-_]/g, ' ') // Replace dashes and underscores with spaces
+          .replace(/([A-Z])/g, ' $1') // Add spaces before capital letters
+          .trim();
+        friendlyName = `${nameWithoutExtension} (${fileType})`;
+      } else {
+        // For non-media URLs, use domain and first path segment
+        const domain = urlObj.hostname.replace('www.', '');
+        const firstPath = urlObj.pathname.split('/')[1] || '';
+        friendlyName = `${domain}${firstPath ? `/${firstPath}` : ''}`;
+      }
+
       displayText = displayText.replace(url, `[[LINK:${friendlyName}:${url}]]`);
       links.push({ url, text: friendlyName });
     });
