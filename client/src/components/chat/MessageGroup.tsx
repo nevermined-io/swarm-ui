@@ -11,15 +11,12 @@ import ImageGrid from "./ImageGrid";
 
 interface MessageGroupProps {
   messages: Message[];
-  autoScroll: boolean;
 }
 
-export default function MessageGroup({ messages, autoScroll }: MessageGroupProps) {
+export default function MessageGroup({ messages }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const typedMessagesCount = useRef(0);
   const { showReasoningCollapse, isStoredConversation } = useChat();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedIds = useRef(new Set<number>());
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
@@ -28,17 +25,10 @@ export default function MessageGroup({ messages, autoScroll }: MessageGroupProps
 
   const words = messages.map(m => m.content.split(" "));
 
-  const scrollToBottom = () => {
-    if (autoScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   useEffect(() => {
     // If it's a stored conversation, show all messages immediately
     if (isStoredConversation) {
       setDisplayedMessages(messages.map(m => m.content));
-      scrollToBottom();
       // Store all message IDs as processed
       messages.forEach(m => lastProcessedIds.current.add(m.id));
       return;
@@ -68,7 +58,6 @@ export default function MessageGroup({ messages, autoScroll }: MessageGroupProps
               newMessages[messageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
               return newMessages;
             });
-            scrollToBottom();
           }
         } else {
           setDisplayedMessages(prev => {
@@ -76,7 +65,6 @@ export default function MessageGroup({ messages, autoScroll }: MessageGroupProps
             newMessages[messageIndex] = message.content;
             return newMessages;
           });
-          scrollToBottom();
         }
 
         // Mark this message as processed
@@ -85,7 +73,7 @@ export default function MessageGroup({ messages, autoScroll }: MessageGroupProps
     }
 
     typeMessages();
-  }, [messages, isStoredConversation, autoScroll]);
+  }, [messages, isStoredConversation]);
 
   const detectMediaUrl = (text: string): { type: 'video' | 'audio' | 'images', urls: string[] } | null => {
     const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
@@ -216,7 +204,6 @@ export default function MessageGroup({ messages, autoScroll }: MessageGroupProps
           })}
         </div>
       </div>
-      <div ref={messagesEndRef} />
     </motion.div>
   );
 }
