@@ -37,8 +37,9 @@ export default function ChatContainer() {
     const scrollArea = scrollAreaRef.current;
     if (scrollArea && !isAutoScrollingRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
       // Show button if we're more than 100px from bottom
-      setShowScrollButton(Math.abs(scrollHeight - scrollTop - clientHeight) > 100);
+      setShowScrollButton(distanceFromBottom > 100);
     }
   };
 
@@ -50,13 +51,13 @@ export default function ChatContainer() {
       requestAnimationFrame(() => {
         const targetScroll = scrollArea.scrollHeight;
         scrollArea.scrollTo({
-          top: targetScroll + 100, // Add buffer to ensure we reach bottom
+          top: targetScroll,
           behavior: 'smooth'
         });
         // Reset auto-scroll flag after animation
         setTimeout(() => {
           isAutoScrollingRef.current = false;
-          checkScrollPosition();
+          setShowScrollButton(false);
         }, 300);
       });
     }
@@ -65,7 +66,17 @@ export default function ChatContainer() {
   // Auto-scroll on new messages
   useEffect(() => {
     if (messages.length > 0) {
-      scrollToBottom();
+      const scrollArea = scrollAreaRef.current;
+      if (scrollArea) {
+        // Only auto-scroll if we're already near the bottom
+        const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        if (distanceFromBottom < 200 || messages[messages.length - 1].isUser) {
+          scrollToBottom();
+        } else {
+          checkScrollPosition(); // Update button visibility
+        }
+      }
     }
   }, [messages]);
 
@@ -73,16 +84,20 @@ export default function ChatContainer() {
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (scrollArea) {
-      scrollArea.addEventListener('scroll', checkScrollPosition);
+      const handleScroll = () => {
+        if (!isAutoScrollingRef.current) {
+          checkScrollPosition();
+        }
+      };
+
+      scrollArea.addEventListener('scroll', handleScroll, { passive: true });
       // Initial check
       checkScrollPosition();
-    }
 
-    return () => {
-      if (scrollArea) {
-        scrollArea.removeEventListener('scroll', checkScrollPosition);
-      }
-    };
+      return () => {
+        scrollArea.removeEventListener('scroll', handleScroll);
+      };
+    }
   }, []);
 
   // Group messages by type sequences
@@ -172,7 +187,7 @@ export default function ChatContainer() {
                 ref={scrollAreaRef}
                 className="h-full px-4 overflow-y-auto"
               >
-                <div className="space-y-4">
+                <div className="space-y-4 pb-12">
                   {messageGroups.map((group, index) => (
                     <MessageGroup 
                       key={index} 
@@ -185,7 +200,7 @@ export default function ChatContainer() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg bg-background/95 backdrop-blur-sm z-[100]"
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg bg-background/95 backdrop-blur-sm z-[1]"
                     onClick={scrollToBottom}
                   >
                     <ChevronDown className="h-4 w-4" />
