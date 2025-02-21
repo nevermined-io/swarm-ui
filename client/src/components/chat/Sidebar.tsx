@@ -6,6 +6,7 @@ import { useChat } from "@/lib/chat-context";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-context";
+import Logo from "./Logo";
 
 interface SidebarProps {
   conversations: Conversation[];
@@ -18,25 +19,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
   return (
     <div className="w-64 h-full flex flex-col bg-sidebar text-sidebar-foreground">
       <div className="p-4 border-b border-sidebar-border/50">
-        <div className="flex items-center gap-2">
-          <svg
-            width="33"
-            height="20"
-            viewBox="0 0 33 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M10.8683 19.9002L0 10.0011V0L10.8683 9.89908V19.9002Z"
-              fill="currentColor"
-            ></path>
-            <path
-              d="M21.7369 19.9002L10.8686 10.0011V0L21.7369 9.89908L32.404 0V10.0011L21.7369 19.9002Z"
-              fill="currentColor"
-            ></path>
-          </svg>
-          <span className="font-semibold text-lg">Nevermined</span>
-        </div>
+        <Logo />
       </div>
       <div className="p-4 border-b border-sidebar-border/50 flex justify-between items-center">
         <h2 className="font-semibold text-sm">Conversations</h2>

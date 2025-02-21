@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Footer from "./Footer";
+import Logo from "./Logo";
 
 interface Message {
   type: string;
@@ -102,22 +103,24 @@ export default function ChatContainer() {
         )}
       >
         <div className="p-4 flex items-center bg-muted/80 border-b">
-          {!sidebarOpen && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(true)}
-              className="mr-2"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
-          {!isEmpty && (
+          {!sidebarOpen ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                className="mr-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Logo className="mr-auto" />
+            </>
+          ) : (
             <div className="text-lg font-semibold">
               Video generator agent
             </div>
           )}
-          <Avatar className="cursor-pointer ml-auto">
+          <Avatar className="cursor-pointer">
             <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
