@@ -176,7 +176,7 @@ export default function ChatContainer() {
               </Button>
             )}
             <div className="text-lg font-semibold">
-              Video generator agent
+              Music video generator agent
             </div>
           </div>
           <div className="flex items-center gap-4">

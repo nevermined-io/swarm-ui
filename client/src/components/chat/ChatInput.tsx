@@ -31,8 +31,10 @@ export default function ChatInput() {
       )}
     >
       {isEmpty && (
-        <div className="mb-4 text-xl font-semibold w-full max-w-2xl mx-auto">
-          Video generator agent
+        <div className="mb-4 text-center space-y-2 w-full max-w-2xl mx-auto">
+          <p className="text-muted-foreground">
+            Describe your music video idea, and I'll help you create it using advanced AI generation techniques.
+          </p>
         </div>
       )}
       <div className="relative w-full max-w-2xl mx-auto">
