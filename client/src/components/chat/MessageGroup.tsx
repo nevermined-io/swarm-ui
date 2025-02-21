@@ -195,20 +195,22 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
                 const cost = costMatch ? costMatch[0] : "";
                 const explorerUrl = `https://sepolia.arbiscan.io/tx/${txHash}`;
                 return (
-                  <div key={index} className="flex items-center gap-2">
+                  <div key={index} className="flex flex-col gap-2">
                     <span className="text-xs font-bold uppercase">Transaction</span>
-                    <span className="text-sm">{cost}</span>
-                    <span className="text-sm text-muted-foreground">•</span>
-                    <a
-                      href={explorerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm flex items-center gap-1 hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {`${txHash.slice(0, 6)}...${txHash.slice(-4)}`}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{cost} for 100 Song Generation credits</span>
+                      <span className="text-sm text-muted-foreground">•</span>
+                      <a
+                        href={explorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm flex items-center gap-1 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {`${txHash.slice(0, 6)}...${txHash.slice(-4)}`}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
                 );
               }

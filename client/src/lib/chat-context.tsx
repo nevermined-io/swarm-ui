@@ -40,7 +40,6 @@ const storedMessages: Record<number, Message[]> = {
     {
       id: 2,
       content: `Let me analyze your video generation request...
-
 I'll be following our standard process documented at https://video.nevermined.io/process and using our latest rendering technology described at https://tech.nevermined.io/video-render.
 
 Key aspects we'll consider:
@@ -141,19 +140,19 @@ You can find more examples in our gallery at https://gallery.nevermined.io/image
 
 // Base responses without delays
 const mockResponsesData: Omit<MockResponse, "delay">[] = [
-  { 
+  {
     content: `I'm analyzing your request and gathering relevant visual examples...
 
 I'll examine the composition guidelines from https://design.nevermined.io/guidelines and cross-reference them with the latest visual trends documented at https://trends.nevermined.io/2025/visual-design.
 
-Based on these sources, I'll generate images that align with our brand identity while maintaining artistic coherence.`, 
+Based on these sources, I'll generate images that align with our brand identity while maintaining artistic coherence.`,
     type: "reasoning"
   },
   {
-    content: `2 $USDC Tx: 0x637ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ee`,
+    content: `2 $USDC for 100 Song Generation credits Tx: 0x637ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ee`,
     type: "transaction"
   },
-  { 
+  {
     content: `Processing multiple image sources and preparing the visual layout...
 
 The generation process involves several steps:
@@ -161,14 +160,14 @@ The generation process involves several steps:
 2. Applying style transfer algorithms
 3. Fine-tuning composition parameters
 
-You can learn more about our image generation process at https://docs.nevermined.io/image-generation.`, 
+You can learn more about our image generation process at https://docs.nevermined.io/image-generation.`,
     type: "reasoning"
   },
   {
-    content: `1.5 $USDC Tx: 0x937ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ff`,
+    content: `1.5 $USDC for 50 High-Quality Rendering credits Tx: 0x937ebb9d299ecc51dda02f7a84b4023132ece65ea6aac869ddbce2b14f6bc4ff`,
     type: "transaction"
   },
-  { 
+  {
     content: `Analyzing composition and aesthetic elements in the generated images...
 
 I've evaluated each image against our quality metrics available at https://metrics.nevermined.io/quality-scores and performed detailed color analysis using guidelines from https://colors.nevermined.io/palette-2025.
@@ -178,17 +177,17 @@ The results show strong alignment with our brand guidelines, particularly in ter
 - Compositional balance
 - Visual hierarchy
 
-For more details about our evaluation process, visit https://evaluation.nevermined.io/process.`, 
+For more details about our evaluation process, visit https://evaluation.nevermined.io/process.`,
     type: "reasoning"
   },
-  { 
+  {
     content: `Here are some example images I've generated:
 
 https://v3.fal.media/files/koala/9SMgfGhSGfvX1EQn5mB-w.png
 https://v3.fal.media/files/kangaroo/TeoR3DPS_EbDpMR-jk7wE.png
 https://v3.fal.media/files/panda/85CanDFiF8oBVOVVg5SYc.png
 
-You can find more examples in our gallery at https://gallery.nevermined.io/images`, 
+You can find more examples in our gallery at https://gallery.nevermined.io/images`,
     type: "answer"
   }
 ];
@@ -284,15 +283,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         title: content.slice(0, 30) + "...",
         timestamp: new Date(),
       };
-      setConversations((prev) => [newConversation, ...prev]); 
+      setConversations((prev) => [newConversation, ...prev]);
       setCurrentConversationId(newConversation.id);
     }
 
     // Send messages with their respective cumulative delays
     mockResponses.forEach((response, index) => {
       const timeoutId = window.setTimeout(() => {
-        if (index > 0 && 
-            mockResponses[index - 1].type === "reasoning" && 
+        if (index > 0 &&
+            mockResponses[index - 1].type === "reasoning" &&
             response.type === "answer") {
           setShowReasoningCollapse(true);
         }
