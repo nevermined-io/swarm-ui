@@ -30,10 +30,11 @@ export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isGeneratingText, setIsGeneratingText] = useState(false);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<number>();
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     const scrollArea = scrollAreaRef.current;
@@ -48,21 +49,25 @@ export default function ChatContainer() {
 
   const handleScroll = () => {
     const scrollArea = scrollAreaRef.current;
-    if (!scrollArea) return;
+    if (!scrollArea || isGeneratingText) return;
 
     const { scrollTop, scrollHeight, clientHeight } = scrollArea;
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
-    // If we're within 100px of the bottom, we should auto-scroll on new messages
-    setShouldAutoScroll(distanceFromBottom < 100);
+    // Only set userHasScrolled if they've scrolled up manually
+    if (distanceFromBottom > 100 && !userHasScrolled) {
+      setUserHasScrolled(true);
+    }
 
-    // Show scroll button if we're more than 200px from bottom
-    setShowScrollButton(distanceFromBottom > 200);
+    // If they've scrolled back to bottom, reset userHasScrolled
+    if (distanceFromBottom < 50) {
+      setUserHasScrolled(false);
+    }
   };
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
-    const isMobile = window.innerWidth < 768; // md breakpoint
+    const isMobile = window.innerWidth < 768;
     setSidebarOpen(!isMobile);
   }, []);
 
@@ -73,14 +78,48 @@ export default function ChatContainer() {
       scrollArea.addEventListener('scroll', handleScroll, { passive: true });
       return () => scrollArea.removeEventListener('scroll', handleScroll);
     }
-  }, []);
+  }, [isGeneratingText]);
 
-  // Handle new messages
+  // Track text generation state by observing message content changes
   useEffect(() => {
-    if (messages.length > 0 && shouldAutoScroll) {
-      scrollToBottom();
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+
+      if (!lastMessage.isUser) {
+        setIsGeneratingText(true);
+
+        // Clear any existing timeout
+        if (scrollTimeoutRef.current) {
+          window.clearTimeout(scrollTimeoutRef.current);
+        }
+
+        // Set a timeout to detect when text generation is complete
+        scrollTimeoutRef.current = window.setTimeout(() => {
+          setIsGeneratingText(false);
+          setUserHasScrolled(false); // Reset on completion
+        }, 1000); // Adjust timing based on your word-by-word animation speed
+      }
     }
-  }, [messages, shouldAutoScroll]);
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [messages]);
+
+  // Handle auto-scrolling
+  useEffect(() => {
+    if (messages.length > 0) {
+      if (isGeneratingText && !userHasScrolled) {
+        // Always scroll while generating text unless user has manually scrolled up
+        scrollToBottom();
+      } else if (!isGeneratingText && !userHasScrolled) {
+        // Scroll to bottom when generation completes if user hasn't scrolled up
+        scrollToBottom();
+      }
+    }
+  }, [messages, isGeneratingText, userHasScrolled]);
 
   // Initial scroll to bottom
   useEffect(() => {
@@ -204,17 +243,7 @@ export default function ChatContainer() {
                   ))}
                   <div ref={lastMessageRef} />
                 </div>
-                {showScrollButton && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg bg-background/95 backdrop-blur-sm z-[1]"
-                    onClick={() => scrollToBottom()}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                    Scroll to bottom
-                  </Button>
-                )}
+                {/* showScrollButton is removed because of smarter auto-scroll */}
               </div>
             </div>
           )}
