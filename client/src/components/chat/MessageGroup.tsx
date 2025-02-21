@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Message } from "@shared/schema";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChat } from "@/lib/chat-context";
 import VideoPlayer from "./VideoPlayer";
@@ -163,6 +163,8 @@ export default function MessageGroup({ messages, isFirstGroup }: MessageGroupPro
             ? "user-message bg-primary text-primary-foreground rounded-lg"
             : messages[0].type === "reasoning"
             ? "bg-muted text-muted-foreground rounded-lg"
+            : messages[0].type === "transaction"
+            ? "bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium"
             : "text-card-foreground"
         )}
       >
@@ -179,6 +181,31 @@ export default function MessageGroup({ messages, isFirstGroup }: MessageGroupPro
         <div className="space-y-4">
           {displayedMessages.map((text, index) => {
             const mediaContent = text && detectMediaUrl(text);
+
+            if (messages[index]?.type === "transaction" && text) {
+              const txMatch = text.match(/Tx: (0x[a-fA-F0-9]+)/);
+              if (txMatch) {
+                const txHash = txMatch[1];
+                const explorerUrl = `https://sepolia.arbiscan.io/tx/${txHash}`;
+                return (
+                  <div key={index} className="flex items-center gap-2">
+                    <span>{text.replace(txMatch[0], '')}</span>
+                    <span className="opacity-70">Tx:</span>
+                    <a
+                      href={explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {`${txHash.slice(0, 6)}...${txHash.slice(-4)}`}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                );
+              }
+            }
+
             return (
               <div key={index}>
                 <div className="whitespace-pre-line">

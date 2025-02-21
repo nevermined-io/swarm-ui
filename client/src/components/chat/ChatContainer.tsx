@@ -30,9 +30,35 @@ export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const isAutoScrollingRef = useRef(false);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    const scrollArea = scrollAreaRef.current;
+    if (scrollArea) {
+      const scrollHeight = scrollArea.scrollHeight;
+      scrollArea.scrollTo({
+        top: scrollHeight,
+        behavior,
+      });
+    }
+  };
+
+  const handleScroll = () => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+    // If we're within 100px of the bottom, we should auto-scroll on new messages
+    setShouldAutoScroll(distanceFromBottom < 100);
+
+    // Show scroll button if we're more than 200px from bottom
+    setShowScrollButton(distanceFromBottom > 200);
+  };
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
@@ -40,72 +66,25 @@ export default function ChatContainer() {
     setSidebarOpen(!isMobile);
   }, []);
 
-  // Handle scroll position check
-  const checkScrollPosition = () => {
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea && !isAutoScrollingRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      // Show button if we're more than 100px from bottom
-      setShowScrollButton(distanceFromBottom > 100);
-    }
-  };
-
-  // Scroll to bottom
-  const scrollToBottom = () => {
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
-      isAutoScrollingRef.current = true;
-      requestAnimationFrame(() => {
-        const targetScroll = scrollArea.scrollHeight;
-        scrollArea.scrollTo({
-          top: targetScroll,
-          behavior: 'smooth'
-        });
-        // Reset auto-scroll flag after animation
-        setTimeout(() => {
-          isAutoScrollingRef.current = false;
-          setShowScrollButton(false);
-        }, 300);
-      });
-    }
-  };
-
-  // Auto-scroll on new messages
-  useEffect(() => {
-    if (messages.length > 0) {
-      const scrollArea = scrollAreaRef.current;
-      if (scrollArea) {
-        // Only auto-scroll if we're already near the bottom
-        const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-        if (distanceFromBottom < 200 || messages[messages.length - 1].isUser) {
-          scrollToBottom();
-        } else {
-          checkScrollPosition(); // Update button visibility
-        }
-      }
-    }
-  }, [messages]);
-
-  // Add scroll event listener
+  // Set up scroll listener
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (scrollArea) {
-      const handleScroll = () => {
-        if (!isAutoScrollingRef.current) {
-          checkScrollPosition();
-        }
-      };
-
       scrollArea.addEventListener('scroll', handleScroll, { passive: true });
-      // Initial check
-      checkScrollPosition();
-
-      return () => {
-        scrollArea.removeEventListener('scroll', handleScroll);
-      };
+      return () => scrollArea.removeEventListener('scroll', handleScroll);
     }
+  }, []);
+
+  // Handle new messages
+  useEffect(() => {
+    if (messages.length > 0 && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, shouldAutoScroll]);
+
+  // Initial scroll to bottom
+  useEffect(() => {
+    scrollToBottom('instant');
   }, []);
 
   // Group messages by type sequences
@@ -176,7 +155,7 @@ export default function ChatContainer() {
               </Button>
             )}
             <div className="text-lg font-semibold">
-              Music video generator agent
+              Music video generator swarm
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -223,13 +202,14 @@ export default function ChatContainer() {
                       isFirstGroup={index === 0}
                     />
                   ))}
+                  <div ref={lastMessageRef} />
                 </div>
                 {showScrollButton && (
                   <Button
                     variant="secondary"
                     size="sm"
                     className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg bg-background/95 backdrop-blur-sm z-[1]"
-                    onClick={scrollToBottom}
+                    onClick={() => scrollToBottom()}
                   >
                     <ChevronDown className="h-4 w-4" />
                     Scroll to bottom

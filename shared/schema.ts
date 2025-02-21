@@ -1,11 +1,11 @@
-import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  type: text("type", { enum: ["reasoning", "answer"] }).notNull(),
+  type: text("type", { enum: ["reasoning", "answer", "transaction"] }).notNull(),
   conversationId: text("conversation_id").notNull(),
   isUser: boolean("is_user").notNull(),
   timestamp: timestamp("timestamp").defaultNow(),
