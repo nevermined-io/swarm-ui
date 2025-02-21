@@ -24,6 +24,7 @@ export default function ChatContainer() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const isAutoScrollingRef = useRef(false);
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function ChatContainer() {
   // Handle scroll position check
   const checkScrollPosition = () => {
     const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
+    if (scrollArea && !isAutoScrollingRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollArea;
       // Show button if we're more than 100px from bottom
       setShowScrollButton(Math.abs(scrollHeight - scrollTop - clientHeight) > 100);
@@ -45,14 +46,27 @@ export default function ChatContainer() {
   const scrollToBottom = () => {
     const scrollArea = scrollAreaRef.current;
     if (scrollArea) {
-      const targetScroll = scrollArea.scrollHeight - scrollArea.clientHeight;
-      scrollArea.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      isAutoScrollingRef.current = true;
+      requestAnimationFrame(() => {
+        const targetScroll = scrollArea.scrollHeight;
+        scrollArea.scrollTo({
+          top: targetScroll + 100, // Add buffer to ensure we reach bottom
+          behavior: 'smooth'
+        });
+        // Reset auto-scroll flag after animation
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+          checkScrollPosition();
+        }, 300);
+      });
     }
   };
 
   // Auto-scroll on new messages
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
   }, [messages]);
 
   // Add scroll event listener
