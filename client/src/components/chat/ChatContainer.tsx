@@ -23,7 +23,7 @@ export default function ChatContainer() {
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
@@ -31,35 +31,46 @@ export default function ChatContainer() {
     setSidebarOpen(!isMobile);
   }, []);
 
-  // Scroll position observer
-  useEffect(() => {
-    const observeScroll = () => {
-      if (scrollAreaRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
-        const isNotAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) > 100;
-        setShowScrollButton(isNotAtBottom);
-      }
-    };
+  // Check if we should show scroll button
+  const checkScrollPosition = () => {
+    const viewport = scrollViewportRef.current;
+    if (viewport) {
+      const { scrollTop, scrollHeight, clientHeight } = viewport;
+      // Show button if we're more than 100px from bottom
+      const shouldShow = Math.abs(scrollHeight - scrollTop - clientHeight) > 100;
+      setShowScrollButton(shouldShow);
+    }
+  };
 
-    const scrollArea = scrollAreaRef.current;
-    if (scrollArea) {
-      scrollArea.addEventListener('scroll', observeScroll);
+  // Add scroll listener
+  useEffect(() => {
+    const viewport = scrollViewportRef.current;
+    if (viewport) {
+      viewport.addEventListener('scroll', checkScrollPosition);
       // Initial check
-      observeScroll();
+      checkScrollPosition();
     }
 
     return () => {
-      if (scrollArea) {
-        scrollArea.removeEventListener('scroll', observeScroll);
+      if (viewport) {
+        viewport.removeEventListener('scroll', checkScrollPosition);
       }
     };
-  }, [messages]); // Re-run when messages change
+  }, []);
+
+  // Recheck scroll position when messages change
+  useEffect(() => {
+    checkScrollPosition();
+  }, [messages]);
 
   // Scroll to bottom
   const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollArea = scrollAreaRef.current;
-      scrollArea.scrollTop = scrollArea.scrollHeight;
+    const viewport = scrollViewportRef.current;
+    if (viewport) {
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -151,9 +162,9 @@ export default function ChatContainer() {
         <div className="flex-1 overflow-hidden relative">
           {!isEmpty && (
             <div className="h-full">
-              <ScrollArea
-                className="h-full px-4 overflow-y-auto"
-                ref={scrollAreaRef}
+              <ScrollArea 
+                className="h-full px-4"
+                viewportRef={scrollViewportRef}
               >
                 <div className="space-y-4">
                   {messageGroups.map((group, index) => (
