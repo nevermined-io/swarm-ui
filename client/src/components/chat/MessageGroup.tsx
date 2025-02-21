@@ -12,9 +12,10 @@ import ImageGrid from "./ImageGrid";
 interface MessageGroupProps {
   messages: Message[];
   isFirstGroup?: boolean;
+  onFinishTyping?: () => void;
 }
 
-export default function MessageGroup({ messages, isFirstGroup }: MessageGroupProps) {
+export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showReasoningCollapse, isStoredConversation } = useChat();
@@ -56,6 +57,8 @@ export default function MessageGroup({ messages, isFirstGroup }: MessageGroupPro
               return newMessages;
             });
           }
+          // Call onFinishTyping when this message is done
+          onFinishTyping?.();
         } else {
           setDisplayedMessages(prev => {
             const newMessages = [...prev];
@@ -69,26 +72,28 @@ export default function MessageGroup({ messages, isFirstGroup }: MessageGroupPro
     }
 
     typeMessages();
-  }, [messages, isStoredConversation]);
+  }, [messages, isStoredConversation, onFinishTyping]);
 
-  const detectMediaUrl = (text: string): { type: 'video' | 'audio' | 'images', urls: string[] } | null => {
+  const detectMediaUrl = (text: string) => {
+    if (!text) return null;
+
     const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
     const audioRegex = /https?:\/\/[^\s]+\.mp3\b/g;
     const imageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)\b/g;
 
     const videoMatch = text.match(videoRegex);
     if (videoMatch) {
-      return { type: 'video', urls: [videoMatch[0]] };
+      return { type: 'video' as const, urls: [videoMatch[0]] };
     }
 
     const audioMatch = text.match(audioRegex);
     if (audioMatch) {
-      return { type: 'audio', urls: [audioMatch[0]] };
+      return { type: 'audio' as const, urls: [audioMatch[0]] };
     }
 
     const imageMatches = text.match(imageRegex);
     if (imageMatches) {
-      return { type: 'images', urls: imageMatches };
+      return { type: 'images' as const, urls: imageMatches };
     }
 
     return null;
@@ -97,7 +102,7 @@ export default function MessageGroup({ messages, isFirstGroup }: MessageGroupPro
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     let displayText = text;
-    const links: { url: string, text: string }[] = [];
+    const links: { url: string; text: string }[] = [];
 
     text.match(urlRegex)?.forEach((url) => {
       const domain = new URL(url).hostname.replace('www.', '');
@@ -180,7 +185,7 @@ export default function MessageGroup({ messages, isFirstGroup }: MessageGroupPro
         )}
         <div className="space-y-4">
           {displayedMessages.map((text, index) => {
-            const mediaContent = text && detectMediaUrl(text);
+            const mediaContent = detectMediaUrl(text);
 
             if (messages[index]?.type === "transaction" && text) {
               const txMatch = text.match(/Tx: (0x[a-fA-F0-9]+)/);

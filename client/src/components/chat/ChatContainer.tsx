@@ -23,7 +23,7 @@ import Logo from "./Logo";
 interface Message {
   type: string;
   isUser: boolean;
-  content: string; // Added content property
+  content: string;
 }
 
 export default function ChatContainer() {
@@ -31,9 +31,8 @@ export default function ChatContainer() {
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastMessageContentRef = useRef<string>("");
 
-  const scrollToBottom = () => {
+  const handleFinishTyping = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -42,19 +41,6 @@ export default function ChatContainer() {
     const isMobile = window.innerWidth < 768;
     setSidebarOpen(!isMobile);
   }, []);
-
-  // Auto-scroll only during text generation
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-
-      // Only scroll if it's a non-user message and the content has changed
-      if (!lastMessage.isUser && lastMessage.content !== lastMessageContentRef.current) {
-        lastMessageContentRef.current = lastMessage.content;
-        scrollToBottom();
-      }
-    }
-  }, [messages]);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
@@ -166,9 +152,10 @@ export default function ChatContainer() {
                       key={index}
                       messages={group}
                       isFirstGroup={index === 0}
+                      onFinishTyping={handleFinishTyping}
                     />
                   ))}
-                  <div ref={messagesEndRef} /> {/* Added ref here */}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
             </div>
