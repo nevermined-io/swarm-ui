@@ -110,16 +110,10 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
 
       // Check if it's a media file
       if (url.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
-        const fileName = urlObj.pathname.split('/').pop() || '';
-        const fileType = fileName.split('.').pop()?.toUpperCase() || '';
-        // Create a more readable name from the filename
-        const nameWithoutExtension = fileName.split('.')[0]
-          .replace(/[-_]/g, ' ') // Replace dashes and underscores with spaces
-          .replace(/([A-Z])/g, ' $1') // Add spaces before capital letters
-          .trim();
-        friendlyName = `${nameWithoutExtension} (${fileType})`;
+        // Just show the filename with extension
+        friendlyName = urlObj.pathname.split('/').pop() || url;
       } else {
-        // For non-media URLs, use domain and first path segment
+        // For non-media URLs, keep the original format
         const domain = urlObj.hostname.replace('www.', '');
         const firstPath = urlObj.pathname.split('/')[1] || '';
         friendlyName = `${domain}${firstPath ? `/${firstPath}` : ''}`;
