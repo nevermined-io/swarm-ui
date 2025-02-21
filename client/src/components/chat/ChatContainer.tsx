@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Settings, HelpCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,18 +23,38 @@ import Logo from "./Logo";
 interface Message {
   type: string;
   isUser: boolean;
+  content: string; // Added content property
 }
 
 export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastMessageContentRef = useRef<string>("");
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   // Set initial sidebar state based on screen width
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
     setSidebarOpen(!isMobile);
   }, []);
+
+  // Auto-scroll only during text generation
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+
+      // Only scroll if it's a non-user message and the content has changed
+      if (!lastMessage.isUser && lastMessage.content !== lastMessageContentRef.current) {
+        lastMessageContentRef.current = lastMessage.content;
+        scrollToBottom();
+      }
+    }
+  }, [messages]);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
@@ -148,6 +168,7 @@ export default function ChatContainer() {
                       isFirstGroup={index === 0}
                     />
                   ))}
+                  <div ref={messagesEndRef} /> {/* Added ref here */}
                 </div>
               </div>
             </div>
