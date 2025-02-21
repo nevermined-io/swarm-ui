@@ -181,18 +181,18 @@ export default function ChatContainer() {
                     />
                   ))}
                 </div>
+                {showScrollButton && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg bg-background/95 backdrop-blur-sm z-[100]"
+                    onClick={scrollToBottom}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                    Scroll to bottom
+                  </Button>
+                )}
               </div>
-              {showScrollButton && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="fixed bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-[100] bg-background/95 backdrop-blur-sm"
-                  onClick={scrollToBottom}
-                >
-                  <ChevronDown className="h-4 w-4" />
-                  Scroll to bottom
-                </Button>
-              )}
             </div>
           )}
         </div>
