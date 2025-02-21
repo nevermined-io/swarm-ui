@@ -30,11 +30,11 @@ export default function ChatContainer() {
     setSidebarOpen(!isMobile);
   }, []);
 
-  // Handle scroll within ScrollArea
+  // Update the handleScroll function to be more sensitive
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement;
     const { scrollTop, scrollHeight, clientHeight } = target;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 10;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setShowScrollButton(!isNearBottom);
   };
 
@@ -79,7 +79,7 @@ export default function ChatContainer() {
             <Sidebar conversations={conversations} />
             <Separator
               orientation="vertical"
-              className="absolute right-0 top-0 h-full opacity-30 hidden md:block"
+              className="absolute right-0 top-0 h-full opacity-50 hidden md:block"
             />
             <Button
               variant="ghost"
@@ -127,7 +127,7 @@ export default function ChatContainer() {
           {!isEmpty && (
             <div className="h-full">
               <ScrollArea
-                className="h-full p-4"
+                className="h-full p-4 overflow-y-auto"
                 onScroll={handleScroll}
                 ref={scrollAreaRef}
               >
@@ -141,7 +141,7 @@ export default function ChatContainer() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-[100]"
+                  className="fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-[100] bg-background/95 backdrop-blur-sm"
                   onClick={scrollToBottom}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -156,7 +156,7 @@ export default function ChatContainer() {
       </div>
 
       {/* Fixed Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-background">
+      <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t">
         <Footer />
       </footer>
     </div>

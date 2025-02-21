@@ -17,7 +17,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
 
   return (
     <div className="w-64 h-full flex flex-col bg-sidebar text-sidebar-foreground">
-      <div className="p-4 border-b border-sidebar-border/30">
+      <div className="p-4 border-b border-sidebar-border/50">
         <div className="flex items-center gap-2">
           <svg
             width="33"
@@ -38,7 +38,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
           <span className="font-semibold text-lg">Nevermined</span>
         </div>
       </div>
-      <div className="p-4 border-b border-sidebar-border/30 flex justify-between items-center">
+      <div className="p-4 border-b border-sidebar-border/50 flex justify-between items-center">
         <h2 className="font-semibold text-sm">Conversations</h2>
         <Button
           variant="ghost"
@@ -71,7 +71,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
           ))}
         </div>
       </ScrollArea>
-      <div className="p-4 border-t border-sidebar-border/30">
+      <div className="p-4 border-t border-sidebar-border/50">
         <Button
           variant="ghost"
           size="sm"
