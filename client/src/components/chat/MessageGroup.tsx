@@ -17,31 +17,64 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const typedMessagesCount = useRef(0);
+  const [autoScroll, setAutoScroll] = useState(true);
   const { showReasoningCollapse, isStoredConversation } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastProcessedIds = useRef(new Set<number>());
 
   const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
   const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
-  const shouldShowCollapseButton = isReasoningGroup && messages.length > 1;
+  const shouldShowCollapseButton = isReasoningGroup;
 
   const words = messages.map(m => m.content.split(" "));
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
+
+  // Handle scroll events
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+
+      // If we're near the bottom (within 100px), enable auto-scroll
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setAutoScroll(isNearBottom);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     // If it's a stored conversation, show all messages immediately
     if (isStoredConversation) {
       setDisplayedMessages(messages.map(m => m.content));
       scrollToBottom();
+      // Store all message IDs as processed
+      messages.forEach(m => lastProcessedIds.current.add(m.id));
       return;
     }
 
-    // For new messages, animate them word by word
+    // For new messages, only animate those we haven't processed yet
     async function typeMessages() {
-      for (let messageIndex = typedMessagesCount.current; messageIndex < messages.length; messageIndex++) {
+      for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
         const message = messages[messageIndex];
+
+        // Skip if we've already processed this message
+        if (lastProcessedIds.current.has(message.id)) {
+          setDisplayedMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[messageIndex] = message.content;
+            return newMessages;
+          });
+          continue;
+        }
+
         if (!message.isUser) {
           const messageWords = words[messageIndex];
           for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
@@ -53,23 +86,23 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             });
             scrollToBottom();
           }
-          typedMessagesCount.current = messageIndex + 1;
         } else {
           setDisplayedMessages(prev => {
             const newMessages = [...prev];
             newMessages[messageIndex] = message.content;
             return newMessages;
           });
-          typedMessagesCount.current = messageIndex + 1;
           scrollToBottom();
         }
+
+        // Mark this message as processed
+        lastProcessedIds.current.add(message.id);
       }
     }
 
     typeMessages();
   }, [messages, isStoredConversation]);
 
-  // Function to detect media URLs
   const detectMediaUrl = (text: string): { type: 'video' | 'audio' | 'images', urls: string[] } | null => {
     const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
     const audioRegex = /https?:\/\/[^\s]+\.mp3\b/g;
@@ -93,7 +126,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     return null;
   };
 
-  // Function to convert URLs in text to clickable links
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     let displayText = text;
