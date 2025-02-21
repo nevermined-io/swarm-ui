@@ -11,9 +11,10 @@ import ImageGrid from "./ImageGrid";
 
 interface MessageGroupProps {
   messages: Message[];
+  isFirstGroup?: boolean;
 }
 
-export default function MessageGroup({ messages }: MessageGroupProps) {
+export default function MessageGroup({ messages, isFirstGroup }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showReasoningCollapse, isStoredConversation } = useChat();
@@ -26,20 +27,16 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
   const words = messages.map(m => m.content.split(" "));
 
   useEffect(() => {
-    // If it's a stored conversation, show all messages immediately
     if (isStoredConversation) {
       setDisplayedMessages(messages.map(m => m.content));
-      // Store all message IDs as processed
       messages.forEach(m => lastProcessedIds.current.add(m.id));
       return;
     }
 
-    // For new messages, only animate those we haven't processed yet
     async function typeMessages() {
       for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
         const message = messages[messageIndex];
 
-        // Skip if we've already processed this message
         if (lastProcessedIds.current.has(message.id)) {
           setDisplayedMessages(prev => {
             const newMessages = [...prev];
@@ -67,7 +64,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           });
         }
 
-        // Mark this message as processed
         lastProcessedIds.current.add(message.id);
       }
     }
@@ -103,7 +99,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
     let displayText = text;
     const links: { url: string, text: string }[] = [];
 
-    // Extract URLs and create friendly names
     text.match(urlRegex)?.forEach((url) => {
       const domain = new URL(url).hostname.replace('www.', '');
       const section = new URL(url).pathname.split('/')[1] || '';
@@ -112,7 +107,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
       links.push({ url, text: friendlyName });
     });
 
-    // Split text by link placeholders and process line breaks
     return displayText.split(/(\[\[LINK:[^:]+:[^\]]+\]\])/).map((part, index) => {
       const linkMatch = part.match(/\[\[LINK:([^:]+):([^\]]+)\]\]/);
       if (linkMatch) {
@@ -130,7 +124,6 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
           </a>
         );
       }
-      // Replace line breaks with <br /> elements and preserve whitespace
       return part.split('\n').map((line, i) => (
         <span key={`${index}-${i}`}>
           {line}
@@ -159,7 +152,8 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        messages[0].isUser ? "ml-auto max-w-[80%]" : isAnswerGroup ? "w-full" : "mr-auto max-w-[80%]"
+        messages[0].isUser ? "ml-auto max-w-[80%]" : isAnswerGroup ? "w-full" : "mr-auto max-w-[80%]",
+        isFirstGroup && "mt-4"
       )}
     >
       <div
@@ -169,7 +163,7 @@ export default function MessageGroup({ messages }: MessageGroupProps) {
             ? "user-message bg-primary text-primary-foreground rounded-lg"
             : messages[0].type === "reasoning"
             ? "bg-muted text-muted-foreground rounded-lg"
-            : "text-card-foreground" // No background for answer messages
+            : "text-card-foreground"
         )}
       >
         {shouldShowCollapseButton && (

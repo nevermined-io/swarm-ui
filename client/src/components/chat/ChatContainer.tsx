@@ -31,18 +31,29 @@ export default function ChatContainer() {
     setSidebarOpen(!isMobile);
   }, []);
 
-  // Update scroll handler to show button more frequently
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLDivElement;
-    console.log('Scroll position:', {
-      scrollTop: target.scrollTop,
-      scrollHeight: target.scrollHeight,
-      clientHeight: target.clientHeight,
-      distance: target.scrollHeight - target.scrollTop - target.clientHeight
-    });
-    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight > 100;
-    setShowScrollButton(isNearBottom);
-  };
+  // Scroll position observer
+  useEffect(() => {
+    const observeScroll = () => {
+      if (scrollAreaRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+        const isNotAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) > 100;
+        setShowScrollButton(isNotAtBottom);
+      }
+    };
+
+    const scrollArea = scrollAreaRef.current;
+    if (scrollArea) {
+      scrollArea.addEventListener('scroll', observeScroll);
+      // Initial check
+      observeScroll();
+    }
+
+    return () => {
+      if (scrollArea) {
+        scrollArea.removeEventListener('scroll', observeScroll);
+      }
+    };
+  }, [messages]); // Re-run when messages change
 
   // Scroll to bottom
   const scrollToBottom = () => {
@@ -51,6 +62,11 @@ export default function ChatContainer() {
       scrollArea.scrollTop = scrollArea.scrollHeight;
     }
   };
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Group messages by type sequences
   const messageGroups = messages.reduce((groups: Message[][], message) => {
@@ -108,29 +124,28 @@ export default function ChatContainer() {
         )}
       >
         <div className="p-4 flex items-center justify-between bg-muted/80 border-b">
-          {!sidebarOpen ? (
-            <>
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSidebarOpen(true)}
-                  className="mr-2"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Logo className="mr-auto" />
-              </div>
-            </>
-          ) : (
+          <div className="flex items-center gap-4">
+            {!sidebarOpen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                className="mr-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
             <div className="text-lg font-semibold">
               Video generator agent
             </div>
-          )}
-          <Avatar className="cursor-pointer">
-            <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
+          </div>
+          <div className="flex items-center gap-4">
+            {!sidebarOpen && <Logo />}
+            <Avatar className="cursor-pointer">
+              <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
+              <AvatarFallback>U</AvatarFallback>
+            </Avatar>
+          </div>
         </div>
 
         <div className="flex-1 overflow-hidden relative">
@@ -138,12 +153,15 @@ export default function ChatContainer() {
             <div className="h-full">
               <ScrollArea
                 className="h-full px-4 overflow-y-auto"
-                onScroll={handleScroll}
                 ref={scrollAreaRef}
               >
                 <div className="space-y-4">
                   {messageGroups.map((group, index) => (
-                    <MessageGroup key={index} messages={group} />
+                    <MessageGroup 
+                      key={index} 
+                      messages={group} 
+                      isFirstGroup={index === 0}
+                    />
                   ))}
                 </div>
               </ScrollArea>
