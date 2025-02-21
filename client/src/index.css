@@ -28,7 +28,7 @@
     --sidebar-foreground: 0 0% 100%;
     --sidebar-accent: 240 100% 16%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 100% 16%;
+    --sidebar-border: 240 100% 38%;
   }
 
   .dark {
@@ -56,7 +56,7 @@
     --sidebar-foreground: 0 0% 100%;
     --sidebar-accent: 240 100% 16%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 100% 16%;
+    --sidebar-border: 240 100% 38%;
   }
 }
 

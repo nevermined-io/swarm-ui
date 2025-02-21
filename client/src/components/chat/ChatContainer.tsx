@@ -31,12 +31,17 @@ export default function ChatContainer() {
     setSidebarOpen(!isMobile);
   }, []);
 
-  // Update the handleScroll function to be more sensitive
+  // Update scroll handler to show button more frequently
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement;
-    const { scrollTop, scrollHeight, clientHeight } = target;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShowScrollButton(!isNearBottom);
+    console.log('Scroll position:', {
+      scrollTop: target.scrollTop,
+      scrollHeight: target.scrollHeight,
+      clientHeight: target.clientHeight,
+      distance: target.scrollHeight - target.scrollTop - target.clientHeight
+    });
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight > 100;
+    setShowScrollButton(isNearBottom);
   };
 
   // Scroll to bottom
@@ -70,7 +75,7 @@ export default function ChatContainer() {
       {/* Sidebar */}
       <div
         className={cn(
-          "transition-all duration-300 ease-in-out h-[calc(100vh-64px)]",
+          "transition-all duration-300 ease-in-out h-screen",
           sidebarOpen ? "w-full md:w-64" : "w-0",
           "fixed md:relative z-40",
         )}
@@ -97,7 +102,7 @@ export default function ChatContainer() {
       {/* Main Content */}
       <div
         className={cn(
-          "flex-1 flex flex-col h-[calc(100vh-64px)] main-content",
+          "flex-1 flex flex-col h-screen main-content",
           "transition-all duration-300 ease-in-out",
           !sidebarOpen ? "w-full" : "hidden md:flex md:w-[calc(100%-16rem)]",
         )}
@@ -134,7 +139,7 @@ export default function ChatContainer() {
                 onScroll={handleScroll}
                 ref={scrollAreaRef}
               >
-                <div className="space-y-4 pb-20">
+                <div className="space-y-4">
                   {messageGroups.map((group, index) => (
                     <MessageGroup key={index} messages={group} />
                   ))}
