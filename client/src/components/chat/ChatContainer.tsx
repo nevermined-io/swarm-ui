@@ -75,7 +75,7 @@ export default function ChatContainer() {
       {/* Sidebar */}
       <div
         className={cn(
-          "transition-all duration-300 ease-in-out h-screen",
+          "transition-all duration-300 ease-in-out h-[calc(100vh-48px)]",
           sidebarOpen ? "w-full md:w-64" : "w-0",
           "fixed md:relative z-40",
         )}
@@ -102,23 +102,25 @@ export default function ChatContainer() {
       {/* Main Content */}
       <div
         className={cn(
-          "flex-1 flex flex-col h-screen main-content",
+          "flex-1 flex flex-col h-[calc(100vh-48px)] main-content",
           "transition-all duration-300 ease-in-out",
           !sidebarOpen ? "w-full" : "hidden md:flex md:w-[calc(100%-16rem)]",
         )}
       >
-        <div className="p-4 flex items-center bg-muted/80 border-b">
+        <div className="p-4 flex items-center justify-between bg-muted/80 border-b">
           {!sidebarOpen ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-                className="mr-2"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Logo className="mr-auto" />
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarOpen(true)}
+                  className="mr-2"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Logo className="mr-auto" />
+              </div>
             </>
           ) : (
             <div className="text-lg font-semibold">
@@ -135,7 +137,7 @@ export default function ChatContainer() {
           {!isEmpty && (
             <div className="h-full">
               <ScrollArea
-                className="h-full p-4 overflow-y-auto"
+                className="h-full px-4 overflow-y-auto"
                 onScroll={handleScroll}
                 ref={scrollAreaRef}
               >
@@ -149,7 +151,7 @@ export default function ChatContainer() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="fixed bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-[100] bg-background/95 backdrop-blur-sm"
+                  className="fixed bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 shadow-lg z-[100] bg-background/95 backdrop-blur-sm"
                   onClick={scrollToBottom}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -163,10 +165,10 @@ export default function ChatContainer() {
         <ChatInput />
       </div>
 
-      {/* Fixed Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t">
+      {/* Footer */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
         <Footer />
-      </footer>
+      </div>
     </div>
   );
 }
