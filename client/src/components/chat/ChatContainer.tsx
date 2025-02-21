@@ -65,7 +65,8 @@ export default function ChatContainer() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background relative">
+      {/* Sidebar */}
       <div
         className={cn(
           "transition-all duration-300 ease-in-out h-[calc(100vh-64px)]",
@@ -92,12 +93,12 @@ export default function ChatContainer() {
         )}
       </div>
 
+      {/* Main Content */}
       <div
         className={cn(
-          "flex-1 flex flex-col min-h-screen main-content",
+          "flex-1 flex flex-col h-[calc(100vh-64px)] main-content",
           "transition-all duration-300 ease-in-out",
-          !sidebarOpen ? "w-full" : "hidden md:flex",
-          sidebarOpen ? "md:ml-64" : "",
+          !sidebarOpen ? "w-full" : "hidden md:flex md:w-[calc(100%-16rem)]",
         )}
       >
         <div className="p-4 flex items-center bg-muted/80 border-b">
@@ -152,6 +153,10 @@ export default function ChatContainer() {
         </div>
 
         <ChatInput />
+      </div>
+
+      {/* Fixed Footer */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
         <Footer />
       </div>
     </div>
