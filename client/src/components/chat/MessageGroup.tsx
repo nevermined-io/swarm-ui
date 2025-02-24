@@ -57,7 +57,6 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
               return newMessages;
             });
           }
-          // Call onFinishTyping when this message is done
           onFinishTyping?.();
         } else {
           setDisplayedMessages(prev => {
@@ -102,50 +101,35 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     let displayText = text;
-    const links: { url: string; text: string }[] = [];
 
-    text.match(urlRegex)?.forEach((url) => {
-      const urlObj = new URL(url);
-      let friendlyName = '';
+    return displayText.split(urlRegex).map((part, index) => {
+      if (part.match(urlRegex)) {
+        const urlObj = new URL(part);
+        let friendlyName = part;
 
-      // Check if it's a media file
-      if (url.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
-        // Just show the filename with extension
-        friendlyName = urlObj.pathname.split('/').pop() || url;
-      } else {
-        // For non-media URLs, keep the original format
-        const domain = urlObj.hostname.replace('www.', '');
-        const firstPath = urlObj.pathname.split('/')[1] || '';
-        friendlyName = `${domain}${firstPath ? `/${firstPath}` : ''}`;
-      }
+        // Just show filename for media files
+        if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
+          friendlyName = urlObj.pathname.split('/').pop() || part;
+        } else {
+          const domain = urlObj.hostname.replace('www.', '');
+          const firstPath = urlObj.pathname.split('/')[1] || '';
+          friendlyName = `${domain}${firstPath ? `/${firstPath}` : ''}`;
+        }
 
-      displayText = displayText.replace(url, `[[LINK:${friendlyName}:${url}]]`);
-      links.push({ url, text: friendlyName });
-    });
-
-    return displayText.split(/(\[\[LINK:[^:]+:[^\]]+\]\])/).map((part, index) => {
-      const linkMatch = part.match(/\[\[LINK:([^:]+):([^\]]+)\]\]/);
-      if (linkMatch) {
-        const [, text, url] = linkMatch;
         return (
           <a
             key={index}
-            href={url}
+            href={part}
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
-            {text}
+            {friendlyName}
           </a>
         );
       }
-      return part.split('\n').map((line, i) => (
-        <span key={`${index}-${i}`}>
-          {line}
-          {i < part.split('\n').length - 1 && <br />}
-        </span>
-      ));
+      return part;
     });
   };
 
@@ -197,35 +181,30 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
         <div className="space-y-4">
           {displayedMessages.map((text, index) => {
             const mediaContent = detectMediaUrl(text);
+            const message = messages[index];
 
-            if (messages[index]?.type === "transaction" && text) {
-              const txMatch = text.match(/Tx: (0x[a-fA-F0-9]+)/);
-              if (txMatch) {
-                const txHash = txMatch[1];
-                const costMatch = text.match(/(.+) for (.+) Tx:/);
-                const cost = costMatch ? costMatch[1] : "";
-                const purpose = costMatch ? costMatch[2] : "";
-                const explorerUrl = `https://sepolia.arbiscan.io/tx/${txHash}`;
-                return (
-                  <div key={index} className="flex flex-col gap-2">
-                    <span className="text-xs font-bold uppercase">Transaction</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{cost} for {purpose}</span>
-                      <span className="text-sm text-muted-foreground">•</span>
-                      <a
-                        href={explorerUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm flex items-center gap-1 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {`${txHash.slice(0, 6)}...${txHash.slice(-4)}`}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
+            if (message?.type === "transaction") {
+              // Handle transaction format with txHash from message
+              const explorerUrl = `https://sepolia.arbiscan.io/tx/${message.txHash}`;
+              return (
+                <div key={index} className="flex flex-col gap-2">
+                  <span className="text-xs font-bold uppercase">Transaction</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{text}</span>
+                    <span className="text-sm text-muted-foreground">•</span>
+                    <a
+                      href={explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm flex items-center gap-1 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {`${message.txHash.slice(0, 6)}...${message.txHash.slice(-4)}`}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
-                );
-              }
+                </div>
+              );
             }
 
             return (
