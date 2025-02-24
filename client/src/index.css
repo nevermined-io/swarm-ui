@@ -24,11 +24,11 @@
     --input: 240 10% 89.8%;
     --ring: 240 100% 11%;
     --radius: 0.5rem;
-    --sidebar-background: 240 100% 11%;
+    --sidebar-background: 240 38% 10%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-accent: 240 100% 16%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 100% 38%;
+    --sidebar-border: 240 20% 38%;
   }
 
   .dark {
@@ -52,11 +52,11 @@
     --input: 240 25% 25%;
     --ring: 240 10% 83.1%;
     --radius: 0.5rem;
-    --sidebar-background: 240 100% 11%;
+    --sidebar-background: 240 38% 10%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-accent: 240 100% 16%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 100% 38%;
+    --sidebar-border: 240 20% 38%;
   }
 }
 
