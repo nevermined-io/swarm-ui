@@ -18,9 +18,10 @@ interface MockResponse {
 // Base responses with time deltas
 const mockResponsesData: MockResponse[] = [
   {
-    content: "I have received the request to create an AI-generated music video based on the song 'Get Paid: The Nevermind AI Agent Anthem'. I will split the task into several steps: generating the song, generating the script, creating images, generating videos, and finally compiling everything into a single MP4 file.",
+    content:
+      "I have received a prompt requesting a hip-hop song titled 'Get Paid: The Nevermind AI Agent Anthem' for AI and Crypto builders and ETH Denver 2025 attendees. The song should feature a cyberpunk-style AI agent (half-human, half-machine, neon-accented) rapping with a high-energy electronic beat about earning money via Nevermined’s AI payment platform, referencing multi-agent collaboration and commerce. The prompt includes various verses mentioning Sam Altman, Dominic Williams, Ben Goertzel, Jules Urbach, and a refrain repeating 'Get paid, get paid, that’s the way to go'. It also calls for futuristic visuals with neon colors (greens, blues, purples), holographic effects, glitch art, and Denver-inspired cityscapes. I'll break down the steps: generate the song, generate the script, create images, generate videos, and finally compile everything into one MP4 file.",
     type: "reasoning",
-    timedelta: 789
+    timedelta: 11789,
   },
   {
     content:
@@ -150,19 +151,22 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  const [messages, setMessages] = useState<(Message & { txHash?: string })[]>([]);
+  const [messages, setMessages] = useState<(Message & { txHash?: string })[]>(
+    [],
+  );
   const [conversations, setConversations] = useState<Conversation[]>(
     [...storedConversations].sort(
-      (a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0)
-    )
+      (a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0),
+    ),
   );
-  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    number | null
+  >(null);
   const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
   const [isStoredConversation, setIsStoredConversation] = useState(false);
 
   const messageQueueRef = useRef<MockResponse[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const firstMessageRef = useRef(true);
 
   const clearTimer = () => {
     if (timeoutRef.current) {
@@ -175,10 +179,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (messageQueueRef.current.length === 0) return;
 
     const nextMessage = messageQueueRef.current[0];
-    const messageId = messages.length + 1;
-
     const agentMessage: Message & { txHash?: string } = {
-      id: messageId,
+      id: messages.length + 1,
       content: nextMessage.content,
       type: nextMessage.type,
       isUser: false,
@@ -187,16 +189,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       txHash: nextMessage.txHash,
     };
 
-    setMessages(prev => [...prev, agentMessage]);
+    setMessages((prev) => [...prev, agentMessage]);
   };
 
   const onMessageTypingComplete = () => {
-    if (messageQueueRef.current.length === 0) return;
-
     // Remove the processed message
     messageQueueRef.current.shift();
 
-    // If there are more messages, wait for the next timedelta before showing
+    // If there are more messages, schedule the next one
     if (messageQueueRef.current.length > 0) {
       const nextMessage = messageQueueRef.current[0];
       timeoutRef.current = setTimeout(() => {
@@ -208,7 +208,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const sendMessage = (content: string) => {
     clearTimer();
     setIsStoredConversation(false);
-    firstMessageRef.current = true;
 
     const userMessage: Message & { txHash?: string } = {
       id: messages.length,
@@ -219,30 +218,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setShowReasoningCollapse(false);
 
-    // Create new conversation if needed
     if (!currentConversationId) {
       const newConversation: Conversation = {
         id: conversations.length + 1,
         title: content.slice(0, 30) + "...",
         timestamp: new Date(),
       };
-      setConversations(prev => [newConversation, ...prev]);
+      setConversations((prev) => [newConversation, ...prev]);
       setCurrentConversationId(newConversation.id);
     }
 
-    // Reset the message queue
+    // Reset the message queue and start processing
     messageQueueRef.current = [...mockResponsesData];
-
-    // Start the first message with its delay
-    if (messageQueueRef.current.length > 0) {
-      const firstMessage = messageQueueRef.current[0];
-      timeoutRef.current = setTimeout(() => {
-        processNextMessage();
-      }, firstMessage.timedelta);
-    }
+    processNextMessage();
   };
 
   const loadStoredMessages = (conversationId: number) => {
