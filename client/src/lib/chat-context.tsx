@@ -8,11 +8,6 @@ interface MockResponse {
   txHash?: string;
 }
 
-// Base responses with time deltas
-const mockResponsesData: MockResponse[] = [
-  // ... (keeping existing mock data)
-];
-
 interface ChatContextType {
   messages: (Message & { txHash?: string })[];
   conversations: Conversation[];
@@ -37,7 +32,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
   const [isStoredConversation, setIsStoredConversation] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const messageQueueRef = useRef<MockResponse[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -50,51 +44,40 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const processNextMessage = () => {
-    if (messageQueueRef.current.length === 0 || isProcessing) {
-      setIsProcessing(false);
-      return;
-    }
+    if (messageQueueRef.current.length === 0) return;
 
     const nextMessage = messageQueueRef.current[0];
     const messageId = messages.length + 1;
 
-    // Schedule the message to appear after its delay
-    timeoutRef.current = setTimeout(() => {
-      const agentMessage: Message & { txHash?: string } = {
-        id: messageId,
-        content: nextMessage.content,
-        type: nextMessage.type,
-        isUser: false,
-        conversationId: currentConversationId?.toString() || "new",
-        timestamp: new Date(),
-        txHash: nextMessage.txHash,
-      };
+    const agentMessage: Message & { txHash?: string } = {
+      id: messageId,
+      content: nextMessage.content,
+      type: nextMessage.type,
+      isUser: false,
+      conversationId: currentConversationId?.toString() || "new",
+      timestamp: new Date(),
+      txHash: nextMessage.txHash,
+    };
 
-      setMessages(prev => [...prev, agentMessage]);
-      setIsProcessing(true);
-    }, nextMessage.timedelta);
+    setMessages(prev => [...prev, agentMessage]);
   };
 
   const onMessageTypingComplete = () => {
-    if (messageQueueRef.current.length === 0) {
-      setIsProcessing(false);
-      return;
-    }
-
     // Remove the processed message from the queue
     messageQueueRef.current.shift();
-    setIsProcessing(false);
 
-    // Process the next message if available
+    // If there are more messages, schedule the next one with its delay
     if (messageQueueRef.current.length > 0) {
-      processNextMessage();
+      const nextMessage = messageQueueRef.current[0];
+      timeoutRef.current = setTimeout(() => {
+        processNextMessage();
+      }, nextMessage.timedelta);
     }
   };
 
   const sendMessage = (content: string) => {
     clearTimer();
     setIsStoredConversation(false);
-    setIsProcessing(false);
 
     const userMessage: Message & { txHash?: string } = {
       id: messages.length,
@@ -108,7 +91,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages(prev => [...prev, userMessage]);
     setShowReasoningCollapse(false);
 
-    // Create new conversation if needed
     if (!currentConversationId) {
       const newConversation: Conversation = {
         id: conversations.length + 1,
@@ -119,9 +101,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Reset message queue and start processing
+    // Reset message queue
     messageQueueRef.current = [...mockResponsesData];
-    processNextMessage();
+
+    // Start first message with its delay
+    if (messageQueueRef.current.length > 0) {
+      const firstMessage = messageQueueRef.current[0];
+      timeoutRef.current = setTimeout(() => {
+        processNextMessage();
+      }, firstMessage.timedelta);
+    }
   };
 
   const loadStoredMessages = (conversationId: number) => {
@@ -177,6 +166,35 @@ export function useChat() {
   return context;
 }
 
-// Declare storedConversations and storedMessages here.  These are assumed to exist in the original code.
 const storedConversations: Conversation[] = []; // Replace with actual data
 const storedMessages: { [key: number]: (Message & { txHash?: string })[] } = {}; // Replace with actual data
+
+// Mock response data
+export const mockResponsesData: MockResponse[] = [
+  {
+    content: "I have received the request to create an AI-generated music video based on the song 'Get Paid: The Nevermind AI Agent Anthem'. I will split the task into several steps: generating the song, generating the script, creating images, generating videos, and finally compiling everything into a single MP4 file.",
+    type: "reasoning",
+    timedelta: 789
+  },
+  {
+    content: "I have checked the subscription plan for the Song Generator (did:nv:0c63e2e0449afd88...). There's insufficient balance, so I need to purchase credits. The agent accepts payments in VIRTUAL; I must perform a swap to acquire 1 VIRTUAL.",
+    type: "reasoning",
+    timedelta: 1721
+  },
+  {
+    content: "Swap completed to obtain 1 VIRTUAL.",
+    type: "transaction",
+    txHash: "0x1d465ab71cd0c77252f4aade9ea12d7b9f06e62d154a89e863c1ba0ef28257ef",
+    timedelta: 5202
+  },
+  {
+    content: "Credits purchased for 1 VIRTUAL under the Song Generator plan. The credit balance has been updated successfully.",
+    type: "reasoning",
+    timedelta: 1240
+  },
+  {
+    content: "Here is the generated song 'Get Paid The Nevermind AI Agent Anthem': https://cdnc.ttapi.io/2025-02-24/16f41d8d-7411-4d6a-b528-d408acca8970.mp3",
+    type: "answer",
+    timedelta: 2311
+  }
+];
