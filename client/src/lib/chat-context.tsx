@@ -364,13 +364,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           setShowReasoningCollapse(true);
         }
 
-        const agentMessage: Message = {
+        const agentMessage: Message & { txHash?: string } = {
           id: messages.length + index + 1,
           content: response.content,
           type: response.type,
           isUser: false,
           conversationId: currentConversationId?.toString() || "new",
           timestamp: new Date(),
+          txHash: response.txHash, // Add txHash if present
         };
         setMessages((prev) => [...prev, agentMessage]);
       }, response.delay);

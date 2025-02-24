@@ -34,43 +34,48 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
       return;
     }
 
-    async function typeMessages() {
-      for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
-        const message = messages[messageIndex];
+    let currentMessageIndex = 0;
+    const processNextMessage = async () => {
+      if (currentMessageIndex >= messages.length) return;
 
-        if (lastProcessedIds.current.has(message.id)) {
-          setDisplayedMessages(prev => {
-            const newMessages = [...prev];
-            newMessages[messageIndex] = message.content;
-            return newMessages;
-          });
-          continue;
-        }
-
-        if (!message.isUser) {
-          const messageWords = words[messageIndex];
-          for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
-            await new Promise(resolve => setTimeout(resolve, 50));
-            setDisplayedMessages(prev => {
-              const newMessages = [...prev];
-              newMessages[messageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
-              return newMessages;
-            });
-          }
-          onFinishTyping?.();
-        } else {
-          setDisplayedMessages(prev => {
-            const newMessages = [...prev];
-            newMessages[messageIndex] = message.content;
-            return newMessages;
-          });
-        }
-
-        lastProcessedIds.current.add(message.id);
+      const message = messages[currentMessageIndex];
+      if (lastProcessedIds.current.has(message.id)) {
+        setDisplayedMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[currentMessageIndex] = message.content;
+          return newMessages;
+        });
+        currentMessageIndex++;
+        processNextMessage();
+        return;
       }
-    }
 
-    typeMessages();
+      if (!message.isUser) {
+        const messageWords = message.content.split(" ");
+        for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          setDisplayedMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[currentMessageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
+            return newMessages;
+          });
+        }
+        // Signal that this message is done typing
+        onFinishTyping?.();
+      } else {
+        setDisplayedMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[currentMessageIndex] = message.content;
+          return newMessages;
+        });
+      }
+
+      lastProcessedIds.current.add(message.id);
+      currentMessageIndex++;
+      processNextMessage();
+    };
+
+    processNextMessage();
   }, [messages, isStoredConversation, onFinishTyping]);
 
   const detectMediaUrl = (text: string) => {
