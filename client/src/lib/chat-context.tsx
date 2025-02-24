@@ -18,110 +18,93 @@ interface MockResponse {
 // Base responses with time deltas
 const mockResponsesData: MockResponse[] = [
   {
-    content:
-      "I have received the request to create an AI-generated music video based on the song 'Get Paid: The Nevermind AI Agent Anthem'. I will split the task into several steps: generating the song, generating the script, creating images, generating videos, and finally compiling everything into a single MP4 file.",
+    content: "I have received the request to create an AI-generated music video based on the song 'Get Paid: The Nevermind AI Agent Anthem'. I will split the task into several steps: generating the song, generating the script, creating images, generating videos, and finally compiling everything into a single MP4 file.",
     type: "reasoning",
-    timedelta: 789,
+    timedelta: 789
   },
   {
-    content:
-      "I have checked the subscription plan for the Song Generator (did:nv:0c63e2e0449afd88...). There's insufficient balance, so I need to purchase credits. The agent accepts payments in VIRTUAL; I must perform a swap to acquire 1 VIRTUAL.",
+    content: "I have checked the subscription plan for the Song Generator (did:nv:0c63e2e0449afd88...). There's insufficient balance, so I need to purchase credits. The agent accepts payments in VIRTUAL; I must perform a swap to acquire 1 VIRTUAL.",
     type: "reasoning",
-    timedelta: 1721,
+    timedelta: 1721
   },
   {
     content: "1 VIRTUAL for Song Generator credits",
     type: "transaction",
-    txHash:
-      "0x1d465ab71cd0c77252f4aade9ea12d7b9f06e62d154a89e863c1ba0ef28257ef",
-    timedelta: 5202,
+    txHash: "0x1d465ab71cd0c77252f4aade9ea12d7b9f06e62d154a89e863c1ba0ef28257ef",
+    timedelta: 5202
   },
   {
-    content:
-      "Credits purchased for 1 VIRTUAL under the Song Generator plan. The credit balance has been updated successfully.",
+    content: "Credits purchased for 1 VIRTUAL under the Song Generator plan. The credit balance has been updated successfully.",
     type: "reasoning",
-    timedelta: 1240,
+    timedelta: 1240
   },
   {
-    content:
-      "Here is the generated song 'Get Paid The Nevermind AI Agent Anthem': https://cdnc.ttapi.io/2025-02-24/16f41d8d-7411-4d6a-b528-d408acca8970.mp3",
+    content: "Here is the generated song 'Get Paid The Nevermind AI Agent Anthem': https://cdnc.ttapi.io/2025-02-24/16f41d8d-7411-4d6a-b528-d408acca8970.mp3",
     type: "answer",
-    timedelta: 2311,
+    timedelta: 2311
   },
   {
-    content:
-      "Now I will create the music video script. Checking the subscription plan for the Script Generator (did:nv:f6a20637d1bca9ea...). I have found insufficient balance. The agent requires payment in LARRY; I need to swap 0.1 USDC for 100 LARRY.",
+    content: "Now I will create the music video script. Checking the subscription plan for the Script Generator (did:nv:f6a20637d1bca9ea...). I have found insufficient balance. The agent requires payment in LARRY; I need to swap 0.1 USDC for 100 LARRY.",
     type: "reasoning",
-    timedelta: 1536,
+    timedelta: 1536
   },
   {
     content: "0.1 USDC for 100 LARRY Script Generator credits",
     type: "transaction",
-    txHash:
-      "0xf9c7409e15a08cbaa58b9f9b360ec0f020cd33a9c7a9ceefee3ef3a5a257a564",
-    timedelta: 4150,
+    txHash: "0xf9c7409e15a08cbaa58b9f9b360ec0f020cd33a9c7a9ceefee3ef3a5a257a564",
+    timedelta: 4150
   },
   {
-    content:
-      "Credits purchased for 100 LARRY under the Script Generator plan. The credit balance has been updated successfully.",
+    content: "Credits purchased for 100 LARRY under the Script Generator plan. The credit balance has been updated successfully.",
     type: "reasoning",
-    timedelta: 2248,
+    timedelta: 2248
   },
   {
-    content:
-      "Script and prompts have been successfully generated for 'Get Paid The Nevermind AI Agent Anthem'. Scenes, camera movements, characters, and locations are defined.",
+    content: "Script and prompts have been successfully generated for 'Get Paid The Nevermind AI Agent Anthem'. Scenes, camera movements, characters, and locations are defined.",
     type: "answer",
-    timedelta: 3207,
+    timedelta: 3207
   },
   {
-    content:
-      "Next, I'm moving on to image generation for 8 characters and 5 settings. Checking the subscription plan for the Image/Video Generator (did:nv:61d2abd74124ba6b83b4ce48d1a13d6ce8990cbe3a0c72fed3ff132d0eefabc4...). The balance is insufficient, so I'll purchase credits with 1 USDC.",
+    content: "Next, I'm moving on to image generation for 8 characters and 5 settings. Checking the subscription plan for the Image/Video Generator (did:nv:61d2abd74124ba6b83b4ce48d1a13d6ce8990cbe3a0c72fed3ff132d0eefabc4...). The balance is insufficient, so I'll purchase credits with 1 USDC.",
     type: "reasoning",
-    timedelta: 2912,
+    timedelta: 2912
   },
   {
     content: "1 USDC for Image/Video Generator credits",
     type: "transaction",
-    txHash:
-      "0x08c253511b149f1238f7473764ab354af6a49912fe3254d3b885e5b257debed1",
-    timedelta: 4985,
+    txHash: "0x08c253511b149f1238f7473764ab354af6a49912fe3254d3b885e5b257debed1",
+    timedelta: 4985
   },
   {
-    content:
-      "Images for the 8 characters and 5 settings were successfully generated. Here are the final URLs:\n\nCharacters:\n1) https://v3.fal.media/files/monkey/8RSK0cKzJ2EBwwsYAFrDM.png\n2) https://v3.fal.media/files/rabbit/KQglv2FSGvoqhtDxJtpP7.png\n3) https://v3.fal.media/files/elephant/91qBBxfUH_KXvu9ADZN8Z.png\n4) https://v3.fal.media/files/elephant/8Nd-m7QPyVBb-pe-sPV9C.png\n5) https://v3.fal.media/files/rabbit/f6KayDFei9zEpHI-X1HlF.png\n6) https://v3.fal.media/files/monkey/rOk21o1urcghj2E3l34XC.png\n7) https://v3.fal.media/files/kangaroo/OBVk8NwOBiXHBYnC-V0er.png\n8) https://v3.fal.media/files/penguin/nXk8O4auDh58zWQUaU9yE.png\n\nSettings:\n1) https://v3.fal.media/files/rabbit/c-TeR6iPgIoRZYyOqNLJC.png\n2) https://v3.fal.media/files/rabbit/WtTnWcUZuaKvLpjDIFTBZ.png\n3) https://v3.fal.media/files/rabbit/VJS3J9v2HZyjRnZw0Y1qT.png\n4) https://v3.fal.media/files/kangaroo/QY50O5UDii_NtWd7LCV8K.png\n5) https://v3.fal.media/files/zebra/lwUb-WaWXWc911-KGt-4n.png",
+    content: "Images for the 8 characters and 5 settings were successfully generated. Here are the final URLs:\n\nCharacters:\n1) https://v3.fal.media/files/monkey/8RSK0cKzJ2EBwwsYAFrDM.png\n2) https://v3.fal.media/files/rabbit/KQglv2FSGvoqhtDxJtpP7.png\n3) https://v3.fal.media/files/elephant/91qBBxfUH_KXvu9ADZN8Z.png\n4) https://v3.fal.media/files/elephant/8Nd-m7QPyVBb-pe-sPV9C.png\n5) https://v3.fal.media/files/rabbit/f6KayDFei9zEpHI-X1HlF.png\n6) https://v3.fal.media/files/monkey/rOk21o1urcghj2E3l34XC.png\n7) https://v3.fal.media/files/kangaroo/OBVk8NwOBiXHBYnC-V0er.png\n8) https://v3.fal.media/files/penguin/nXk8O4auDh58zWQUaU9yE.png\n\nSettings:\n1) https://v3.fal.media/files/rabbit/c-TeR6iPgIoRZYyOqNLJC.png\n2) https://v3.fal.media/files/rabbit/WtTnWcUZuaKvLpjDIFTBZ.png\n3) https://v3.fal.media/files/rabbit/VJS3J9v2HZyjRnZw0Y1qT.png\n4) https://v3.fal.media/files/kangaroo/QY50O5UDii_NtWd7LCV8K.png\n5) https://v3.fal.media/files/zebra/lwUb-WaWXWc911-KGt-4n.png",
     type: "answer",
-    timedelta: 9212,
+    timedelta: 9212
   },
   {
-    content:
-      "I am now creating 22 video generation tasks based on the script prompts, each executed concurrently using the same subscription plan.",
+    content: "I am now creating 22 video generation tasks based on the script prompts, each executed concurrently using the same subscription plan.",
     type: "reasoning",
-    timedelta: 1054,
+    timedelta: 1054
   },
   {
-    content:
-      "All generated videos have been validated successfully. The system confirms completion for each of the 22 tasks.",
+    content: "All generated videos have been validated successfully. The system confirms completion for each of the 22 tasks.",
     type: "reasoning",
-    timedelta: 1387,
+    timedelta: 1387
   },
   {
-    content:
-      "All 22 video clips have been generated successfully. The final set is complete and ready for merging with the audio track.",
+    content: "All 22 video clips have been generated successfully. The final set is complete and ready for merging with the audio track.",
     type: "answer",
-    timedelta: 29124,
+    timedelta: 29124
   },
   {
-    content:
-      "I am merging the video tracks without audio first, then I'll add the generated song. Once the final encoding is done, I will upload the MP4 file to S3.",
+    content: "I am merging the video tracks without audio first, then I'll add the generated song. Once the final encoding is done, I will upload the MP4 file to S3.",
     type: "reasoning",
-    timedelta: 1875,
+    timedelta: 1875
   },
   {
-    content:
-      "The final video 'Get Paid The Nevermind AI Agent Anthem' has been uploaded to S3: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/get_paid_the_nevermind_ai_agent_anthem.mp4",
+    content: "The final video 'Get Paid The Nevermind AI Agent Anthem' has been uploaded to S3: https://nvm-music-video-swarm-bucket.s3.amazonaws.com/get_paid_the_nevermind_ai_agent_anthem.mp4",
     type: "answer",
-    timedelta: 6342,
-  },
+    timedelta: 6342
+  }
 ];
 
 interface ChatContextType {
@@ -148,21 +131,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
   const [isStoredConversation, setIsStoredConversation] = useState(false);
+
   const messageQueueRef = useRef<MockResponse[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isTypingRef = useRef(false);
 
-  const clearTimeout = () => {
+  const clearTimer = () => {
     if (timeoutRef.current) {
-      window.clearTimeout(timeoutRef.current);
+      clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
   };
 
   const processNextMessage = () => {
-    if (messageQueueRef.current.length === 0 || isTypingRef.current) {
-      return;
-    }
+    if (messageQueueRef.current.length === 0) return;
 
     const nextMessage = messageQueueRef.current[0];
     const agentMessage: Message & { txHash?: string } = {
@@ -176,25 +157,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
 
     setMessages(prev => [...prev, agentMessage]);
-    isTypingRef.current = true;
   };
 
   const onMessageTypingComplete = () => {
-    isTypingRef.current = false;
-    // Remove the message that just finished typing
+    // Remove the processed message
     messageQueueRef.current.shift();
 
-    // If there are more messages, start the delay for the next one
+    // If there are more messages, schedule the next one
     if (messageQueueRef.current.length > 0) {
       const nextMessage = messageQueueRef.current[0];
-      timeoutRef.current = window.setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         processNextMessage();
       }, nextMessage.timedelta);
     }
   };
 
   const sendMessage = (content: string) => {
-    clearTimeout();
+    clearTimer();
     setIsStoredConversation(false);
 
     const userMessage: Message & { txHash?: string } = {
@@ -206,7 +185,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setShowReasoningCollapse(false);
 
     if (!currentConversationId) {
@@ -215,20 +194,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         title: content.slice(0, 30) + "...",
         timestamp: new Date(),
       };
-      setConversations((prev) => [newConversation, ...prev]);
+      setConversations(prev => [newConversation, ...prev]);
       setCurrentConversationId(newConversation.id);
     }
 
-    // Reset queue and start new sequence
+    // Reset the message queue and start processing
     messageQueueRef.current = [...mockResponsesData];
-    isTypingRef.current = false;
     processNextMessage();
   };
 
   const loadStoredMessages = (conversationId: number) => {
     const storedConversationMessages = storedMessages[conversationId];
     if (storedConversationMessages) {
-      clearTimeout();
+      clearTimer();
       setMessages(storedConversationMessages);
       setShowReasoningCollapse(false);
       setIsStoredConversation(true);
@@ -236,7 +214,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSetCurrentConversationId = (id: number | null) => {
-    clearTimeout();
+    clearTimer();
     setCurrentConversationId(id);
     if (id !== null) {
       loadStoredMessages(id);
@@ -251,7 +229,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    return () => clearTimeout();
+    return () => clearTimer();
   }, []);
 
   return (
@@ -299,8 +277,7 @@ const storedConversations: Conversation[] = [
   },
 ];
 
-// Stored messages for each conversation
-const storedMessages: Record<number, Message[]> = {
+const storedMessages: Record<number, (Message & { txHash?: string })[]> = {
   1: [
     {
       id: 1,

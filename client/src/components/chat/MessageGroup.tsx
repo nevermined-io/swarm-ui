@@ -10,7 +10,7 @@ import AudioPlayer from "./AudioPlayer";
 import ImageGrid from "./ImageGrid";
 
 interface MessageGroupProps {
-  messages: (Message & { txHash?: string })[];
+  messages: (Message & { txHash?: string; id: number })[];
   isFirstGroup?: boolean;
   onFinishTyping?: () => void;
 }
@@ -19,48 +19,48 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showReasoningCollapse, isStoredConversation, onMessageTypingComplete } = useChat();
-  const currentMessageRef = useRef<number>(0);
-  const isCancelledRef = useRef(false);
+  const typedMessagesRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (isStoredConversation) {
       setDisplayedMessages(messages.map(m => m.content));
+      messages.forEach(m => typedMessagesRef.current.add(m.id));
       return;
     }
 
-    // Only process the latest message
-    const currentIndex = messages.length - 1;
-    const message = messages[currentIndex];
+    // Process only the latest untypedMessage
+    const untypedMessageIndex = messages.findIndex(m => !typedMessagesRef.current.has(m.id));
+    if (untypedMessageIndex === -1) return;
 
-    if (!message || message.isUser) {
+    const message = messages[untypedMessageIndex];
+    if (message.isUser) {
       setDisplayedMessages(prev => {
         const newMessages = [...prev];
-        if (message) {
-          newMessages[currentIndex] = message.content;
-        }
+        newMessages[untypedMessageIndex] = message.content;
         return newMessages;
       });
+      typedMessagesRef.current.add(message.id);
       return;
     }
 
     let isCancelled = false;
-    currentMessageRef.current = currentIndex;
 
     const typeMessage = async () => {
       const words = message.content.split(" ");
       for (let i = 0; i <= words.length; i++) {
-        if (isCancelled || currentMessageRef.current !== currentIndex) break;
+        if (isCancelled) break;
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
         setDisplayedMessages(prev => {
           const newMessages = [...prev];
-          newMessages[currentIndex] = words.slice(0, i).join(" ");
+          newMessages[untypedMessageIndex] = words.slice(0, i).join(" ");
           return newMessages;
         });
       }
 
-      if (!isCancelled && currentMessageRef.current === currentIndex) {
+      if (!isCancelled) {
+        typedMessagesRef.current.add(message.id);
         onFinishTyping?.();
         onMessageTypingComplete();
       }
@@ -100,13 +100,10 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
 
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    let displayText = text;
-
-    return displayText.split(urlRegex).map((part, index) => {
+    return text.split(urlRegex).map((part, index) => {
       if (part.match(urlRegex)) {
         const urlObj = new URL(part);
         let friendlyName = part;
-
 
         if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
           friendlyName = urlObj.pathname.split('/').pop() || part;
