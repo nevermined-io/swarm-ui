@@ -10,7 +10,7 @@ import AudioPlayer from "./AudioPlayer";
 import ImageGrid from "./ImageGrid";
 
 interface MessageGroupProps {
-  messages: Message[];
+  messages: (Message & { txHash?: string })[];
   isFirstGroup?: boolean;
   onFinishTyping?: () => void;
 }
@@ -184,7 +184,6 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
             const message = messages[index];
 
             if (message?.type === "transaction") {
-              // Handle transaction format with txHash from message
               const explorerUrl = `https://sepolia.arbiscan.io/tx/${message.txHash}`;
               return (
                 <div key={index} className="flex flex-col gap-2">
@@ -199,7 +198,7 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
                       className="text-sm flex items-center gap-1 hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {`${message.txHash.slice(0, 6)}...${message.txHash.slice(-4)}`}
+                      {`${message.txHash?.slice(0, 6)}...${message.txHash?.slice(-4)}`}
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
