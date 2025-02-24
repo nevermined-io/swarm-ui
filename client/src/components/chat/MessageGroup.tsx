@@ -18,14 +18,9 @@ interface MessageGroupProps {
 export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }: MessageGroupProps) {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { showReasoningCollapse, isStoredConversation } = useChat();
-  const lastProcessedIds = useRef(new Set<number>());
-
-  const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
-  const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
-  const shouldShowCollapseButton = isReasoningGroup;
-
-  const words = messages.map(m => m.content.split(" "));
+  const { showReasoningCollapse, isStoredConversation, onMessageTypingComplete } = useChat();
+  const lastProcessedIds = useRef<Set<number>>(new Set());
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     if (isStoredConversation) {
@@ -35,33 +30,41 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
     }
 
     let currentMessageIndex = 0;
+    let isCancelled = false;
+
     const processNextMessage = async () => {
-      if (currentMessageIndex >= messages.length) return;
+      if (isCancelled || currentMessageIndex >= messages.length) {
+        isTypingRef.current = false;
+        return;
+      }
 
       const message = messages[currentMessageIndex];
+
       if (lastProcessedIds.current.has(message.id)) {
-        setDisplayedMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[currentMessageIndex] = message.content;
-          return newMessages;
-        });
         currentMessageIndex++;
         processNextMessage();
         return;
       }
 
       if (!message.isUser) {
+        isTypingRef.current = true;
         const messageWords = message.content.split(" ");
+
         for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
+          if (isCancelled) break;
+
           await new Promise(resolve => setTimeout(resolve, 50));
+
           setDisplayedMessages(prev => {
             const newMessages = [...prev];
             newMessages[currentMessageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
             return newMessages;
           });
         }
-        // Signal that this message is done typing
+
+        isTypingRef.current = false;
         onFinishTyping?.();
+        onMessageTypingComplete(); 
       } else {
         setDisplayedMessages(prev => {
           const newMessages = [...prev];
@@ -76,7 +79,11 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
     };
 
     processNextMessage();
-  }, [messages, isStoredConversation, onFinishTyping]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [messages, isStoredConversation, onFinishTyping, onMessageTypingComplete]);
 
   const detectMediaUrl = (text: string) => {
     if (!text) return null;
@@ -112,7 +119,7 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
         const urlObj = new URL(part);
         let friendlyName = part;
 
-        // Just show filename for media files
+        
         if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
           friendlyName = urlObj.pathname.split('/').pop() || part;
         } else {
@@ -137,6 +144,10 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
       return part;
     });
   };
+
+  const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
+  const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
+  const shouldShowCollapseButton = isReasoningGroup;
 
   if (isCollapsed && isReasoningGroup) {
     return (

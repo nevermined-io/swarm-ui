@@ -124,22 +124,172 @@ const mockResponsesData: MockResponse[] = [
   },
 ];
 
-// Calculate delays based on time deltas
-const mockResponses: MockResponse[] = mockResponsesData.map(
-  (response, index) => {
-    // Calculate cumulative delay based on all previous messages' time deltas
-    const cumulativeDelay = mockResponsesData
-      .slice(0, index + 1)
-      .reduce((total, msg) => total + msg.timedelta, 0);
+interface ChatContextType {
+  messages: (Message & { txHash?: string })[];
+  conversations: Conversation[];
+  currentConversationId: number | null;
+  showReasoningCollapse: boolean;
+  isStoredConversation: boolean;
+  sendMessage: (content: string) => void;
+  setCurrentConversationId: (id: number | null) => void;
+  startNewConversation: () => void;
+  onMessageTypingComplete: () => void;
+}
 
-    return {
-      ...response,
-      delay: cumulativeDelay,
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+export function ChatProvider({ children }: { children: ReactNode }) {
+  const [messages, setMessages] = useState<(Message & { txHash?: string })[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(
+    [...storedConversations].sort(
+      (a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0)
+    ),
+  );
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
+  const [isStoredConversation, setIsStoredConversation] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const messageQueueRef = useRef<MockResponse[]>([]);
+  const isProcessingRef = useRef(false);
+
+  const clearPendingTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const processNextMessage = () => {
+    if (messageQueueRef.current.length === 0) {
+      isProcessingRef.current = false;
+      return;
+    }
+
+    isProcessingRef.current = true;
+    const response = messageQueueRef.current.shift();
+
+    if (response) {
+      const agentMessage: Message & { txHash?: string } = {
+        id: messages.length + 1,
+        content: response.content,
+        type: response.type,
+        isUser: false,
+        conversationId: currentConversationId?.toString() || "new",
+        timestamp: new Date(),
+        txHash: response.txHash,
+      };
+
+      setMessages((prev) => [...prev, agentMessage]);
+    }
+  };
+
+  const onMessageTypingComplete = () => {
+    // Remove the processed message from the queue
+
+    // If there are more messages, start the delay for the next one
+    if (messageQueueRef.current.length > 0) {
+      const response = messageQueueRef.current[0];
+      timeoutRef.current = setTimeout(() => {
+        processNextMessage();
+        onMessageTypingComplete(); //recursive call to handle next message
+      }, response.timedelta);
+    } else {
+      isProcessingRef.current = false;
+    }
+  };
+
+  const sendMessage = (content: string) => {
+    clearPendingTimeout();
+    setIsStoredConversation(false);
+
+    const userMessage: Message & { txHash?: string } = {
+      id: messages.length,
+      content,
+      type: "answer",
+      isUser: true,
+      conversationId: currentConversationId?.toString() || "new",
+      timestamp: new Date(),
     };
-  },
-);
 
-// Example stored conversations
+    setMessages((prev) => [...prev, userMessage]);
+    setShowReasoningCollapse(false);
+
+    if (!currentConversationId) {
+      const newConversation: Conversation = {
+        id: conversations.length + 1,
+        title: content.slice(0, 30) + "...",
+        timestamp: new Date(),
+      };
+      setConversations((prev) => [newConversation, ...prev]);
+      setCurrentConversationId(newConversation.id);
+    }
+
+    // Queue all mock responses
+    messageQueueRef.current = [...mockResponsesData];
+
+    // Start processing if not already processing
+    if (!isProcessingRef.current) {
+      processNextMessage();
+    }
+  };
+
+  const loadStoredMessages = (conversationId: number) => {
+    const storedConversationMessages = storedMessages[conversationId];
+    if (storedConversationMessages) {
+      clearPendingTimeout();
+      setMessages(storedConversationMessages);
+      setShowReasoningCollapse(false);
+      setIsStoredConversation(true);
+    }
+  };
+
+  const handleSetCurrentConversationId = (id: number | null) => {
+    clearPendingTimeout();
+    setCurrentConversationId(id);
+    if (id !== null) {
+      loadStoredMessages(id);
+    } else {
+      setMessages([]);
+      setIsStoredConversation(false);
+    }
+  };
+
+  const startNewConversation = () => {
+    handleSetCurrentConversationId(null);
+  };
+
+
+  useEffect(() => {
+    return () => clearPendingTimeout();
+  }, []);
+
+  return (
+    <ChatContext.Provider
+      value={{
+        messages,
+        conversations,
+        currentConversationId,
+        showReasoningCollapse,
+        isStoredConversation,
+        sendMessage,
+        setCurrentConversationId: handleSetCurrentConversationId,
+        startNewConversation,
+        onMessageTypingComplete,
+      }}
+    >
+      {children}
+    </ChatContext.Provider>
+  );
+}
+
+export function useChat() {
+  const context = useContext(ChatContext);
+  if (!context) {
+    throw new Error("useChat must be used within a ChatProvider");
+  }
+  return context;
+}
+
 const storedConversations: Conversation[] = [
   {
     id: 1,
@@ -269,144 +419,3 @@ You can find more examples in our gallery at https://gallery.nevermined.io/image
     },
   ],
 };
-
-interface ChatContextType {
-  messages: Message[];
-  conversations: Conversation[];
-  currentConversationId: number | null;
-  showReasoningCollapse: boolean;
-  isStoredConversation: boolean;
-  sendMessage: (content: string) => void;
-  setCurrentConversationId: (id: number | null) => void;
-  startNewConversation: () => void;
-}
-
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
-export function ChatProvider({ children }: { children: ReactNode }) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>(
-    [...storedConversations].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-    ),
-  );
-  const [currentConversationId, setCurrentConversationId] = useState<
-    number | null
-  >(null);
-  const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
-  const [isStoredConversation, setIsStoredConversation] = useState(false);
-  const timeoutsRef = useRef<number[]>([]);
-
-  // Clear all pending timeouts
-  const clearPendingTimeouts = () => {
-    timeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-    timeoutsRef.current = [];
-  };
-
-  const loadStoredMessages = (conversationId: number) => {
-    const storedConversationMessages = storedMessages[conversationId];
-    if (storedConversationMessages) {
-      clearPendingTimeouts(); // Clear any pending message generation
-      setMessages(storedConversationMessages);
-      setShowReasoningCollapse(false);
-      setIsStoredConversation(true);
-    }
-  };
-
-  const handleSetCurrentConversationId = (id: number | null) => {
-    clearPendingTimeouts(); // Clear pending messages when switching conversations
-    setCurrentConversationId(id);
-    if (id !== null) {
-      loadStoredMessages(id);
-    } else {
-      setMessages([]);
-      setIsStoredConversation(false);
-    }
-  };
-
-  const startNewConversation = () => {
-    handleSetCurrentConversationId(null);
-  };
-
-  const sendMessage = (content: string) => {
-    clearPendingTimeouts(); // Clear any pending messages before starting new ones
-    setIsStoredConversation(false);
-    const userMessage: Message = {
-      id: messages.length,
-      content,
-      type: "answer",
-      isUser: true,
-      conversationId: currentConversationId?.toString() || "new",
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setShowReasoningCollapse(false);
-
-    if (!currentConversationId) {
-      const newConversation: Conversation = {
-        id: conversations.length + 1,
-        title: content.slice(0, 30) + "...",
-        timestamp: new Date(),
-      };
-      setConversations((prev) => [newConversation, ...prev]);
-      setCurrentConversationId(newConversation.id);
-    }
-
-    // Send messages with their respective cumulative delays
-    mockResponses.forEach((response, index) => {
-      const timeoutId = window.setTimeout(() => {
-        if (
-          index > 0 &&
-          mockResponses[index - 1].type === "reasoning" &&
-          response.type === "answer"
-        ) {
-          setShowReasoningCollapse(true);
-        }
-
-        const agentMessage: Message & { txHash?: string } = {
-          id: messages.length + index + 1,
-          content: response.content,
-          type: response.type,
-          isUser: false,
-          conversationId: currentConversationId?.toString() || "new",
-          timestamp: new Date(),
-          txHash: response.txHash, // Add txHash if present
-        };
-        setMessages((prev) => [...prev, agentMessage]);
-      }, response.delay);
-
-      timeoutsRef.current.push(timeoutId);
-    });
-  };
-
-  // Clean up timeouts on unmount
-  useEffect(() => {
-    return () => clearPendingTimeouts();
-  }, []);
-
-  return (
-    <ChatContext.Provider
-      value={{
-        messages,
-        conversations,
-        currentConversationId,
-        showReasoningCollapse,
-        isStoredConversation,
-        sendMessage,
-        setCurrentConversationId: handleSetCurrentConversationId,
-        startNewConversation,
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
-  );
-}
-
-export function useChat() {
-  const context = useContext(ChatContext);
-  if (!context) {
-    throw new Error("useChat must be used within a ChatProvider");
-  }
-  return context;
-}
