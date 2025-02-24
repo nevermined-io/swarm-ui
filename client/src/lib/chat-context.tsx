@@ -21,13 +21,19 @@ const mockResponsesData: MockResponse[] = [
     content:
       "I have received a prompt requesting a hip-hop song titled 'Get Paid: The Nevermind AI Agent Anthem' for AI and Crypto builders and ETH Denver 2025 attendees. The song should feature a cyberpunk-style AI agent (half-human, half-machine, neon-accented) rapping with a high-energy electronic beat about earning money via Nevermined’s AI payment platform, referencing multi-agent collaboration and commerce. The prompt includes various verses mentioning Sam Altman, Dominic Williams, Ben Goertzel, Jules Urbach, and a refrain repeating 'Get paid, get paid, that’s the way to go'. It also calls for futuristic visuals with neon colors (greens, blues, purples), holographic effects, glitch art, and Denver-inspired cityscapes. I'll break down the steps: generate the song, generate the script, create images, generate videos, and finally compile everything into one MP4 file.",
     type: "reasoning",
-    timedelta: 789,
+    timedelta: 11789,
   },
   {
     content:
-      "Checking subscription plan https://testing.nevermined.app/en/agent/did:nv:0c63e2e0449afd88ccac2e4e7f3e4cd5d68eafa4026945c9f5b537b311486f63 for the Song Generator. There's insufficient balance, so I need to purchase credits. The agent accepts payments in VIRTUAL; I must perform a swap to acquire 1 VIRTUAL.",
+      "Checking subscription plan https://testing.nevermined.app/en/agent/did:nv:0c63e2e0449afd88ccac2e4e7f3e4cd5d68eafa4026945c9f5b537b311486f63 for the Song Generator.",
     type: "reasoning",
     timedelta: 1721,
+  },
+  {
+    content:
+      "There's insufficient balance, so I need to purchase credits. The agent accepts payments in VIRTUAL; I must perform a swap to acquire 1 VIRTUAL.",
+    type: "reasoning",
+    timedelta: 725,
   },
   {
     content: "Swap completed to obtain 1 VIRTUAL.",
@@ -46,13 +52,19 @@ const mockResponsesData: MockResponse[] = [
     content:
       "Here is the generated song 'Get Paid The Nevermind AI Agent Anthem': https://cdnc.ttapi.io/2025-02-24/16f41d8d-7411-4d6a-b528-d408acca8970.mp3",
     type: "answer",
-    timedelta: 2311,
+    timedelta: 5311,
   },
   {
     content:
-      "Checking subscription plan https://testing.nevermined.app/en/agent/did:nv:f6a20637d1bca9ea12d0116dd50b9475cf5512099a57208dacf210a98af4e064 for the Script Generator. I have found insufficient balance. The agent requires payment in LARRY; I need to swap 0.1 USDC for 100 LARRY.",
+      "Checking subscription plan https://testing.nevermined.app/en/agent/did:nv:f6a20637d1bca9ea12d0116dd50b9475cf5512099a57208dacf210a98af4e064 for the Script Generator.",
     type: "reasoning",
     timedelta: 1536,
+  },
+  {
+    content:
+      "I have found insufficient balance. The agent requires payment in LARRY; I need to swap 0.1 USDC for 100 LARRY.",
+    type: "reasoning",
+    timedelta: 425,
   },
   {
     content: "Swap completed to obtain 100 LARRY.",
@@ -71,17 +83,22 @@ const mockResponsesData: MockResponse[] = [
     content:
       "Script and prompts have been successfully generated for 'Get Paid The Nevermind AI Agent Anthem'. Scenes, camera movements, characters, and locations are defined.",
     type: "answer",
-    timedelta: 3207,
+    timedelta: 4207,
   },
   {
     content:
-      "Checking subscription plan https://testing.nevermined.app/en/agent/did:nv:61d2abd74124ba6b83b4ce48d1a13d6ce8990cbe3a0c72fed3ff132d0eefabc4 for the Image/Video Generator. The balance is insufficient, so I'll purchase credits with 1 USDC.",
+      "Checking subscription plan https://testing.nevermined.app/en/agent/did:nv:61d2abd74124ba6b83b4ce48d1a13d6ce8990cbe3a0c72fed3ff132d0eefabc4 for the Image/Video Generator.",
     type: "reasoning",
     timedelta: 2912,
   },
   {
     content:
-      "Credits purchased with 1 USDC under plan https://testing.nevermined.app/en/agent/did:nv:61d2abd74124ba6b83b4ce48d1a13d6ce8990cbe3a0c72fed3ff132d0eefabc4.",
+      "The balance is insufficient, so I'll purchase credits with 1 USDC.",
+    type: "reasoning",
+    timedelta: 725,
+  },
+  {
+    content: "Credits purchased with 1 USDC.",
     type: "transaction",
     txHash:
       "0x08c253511b149f1238f7473764ab354af6a49912fe3254d3b885e5b257debed1",
@@ -97,25 +114,19 @@ const mockResponsesData: MockResponse[] = [
     content:
       "I am now creating 22 video generation tasks based on the script prompts, each executed concurrently using the same subscription plan.",
     type: "reasoning",
-    timedelta: 1054,
-  },
-  {
-    content:
-      "All generated videos have been validated successfully. The system confirms completion for each of the 22 tasks.",
-    type: "reasoning",
-    timedelta: 1387,
+    timedelta: 454,
   },
   {
     content:
       "All 22 video clips have been generated successfully. The final set is complete and ready for merging with the audio track.",
     type: "answer",
-    timedelta: 29124,
+    timedelta: 9124,
   },
   {
     content:
       "I am merging the video tracks without audio first, then I'll add the generated song. Once the final encoding is done, I will upload the MP4 file to S3.",
     type: "reasoning",
-    timedelta: 1875,
+    timedelta: 375,
   },
   {
     content:
@@ -124,6 +135,7 @@ const mockResponsesData: MockResponse[] = [
     timedelta: 6342,
   },
 ];
+
 interface ChatContextType {
   messages: (Message & { txHash?: string })[];
   conversations: Conversation[];
@@ -206,7 +218,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setShowReasoningCollapse(false);
 
     if (!currentConversationId) {
@@ -215,13 +227,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         title: content.slice(0, 30) + "...",
         timestamp: new Date(),
       };
-      setConversations((prev) => [newConversation, ...prev]);
+      setConversations(prev => [newConversation, ...prev]);
       setCurrentConversationId(newConversation.id);
     }
 
-    // Reset the message queue and start processing
+    // Reset the message queue and start processing with initial delay
     messageQueueRef.current = [...mockResponsesData];
-    processNextMessage();
+
+    // Apply the first message's delay before starting
+    const firstMessage = messageQueueRef.current[0];
+    if (firstMessage) {
+      timeoutRef.current = setTimeout(() => {
+        processNextMessage();
+      }, firstMessage.timedelta);
+    }
   };
 
   const loadStoredMessages = (conversationId: number) => {
