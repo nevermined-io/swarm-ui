@@ -19,66 +19,54 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
   const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { showReasoningCollapse, isStoredConversation, onMessageTypingComplete } = useChat();
-  const lastProcessedIds = useRef<Set<number>>(new Set());
-  const isTypingRef = useRef(false);
+  const currentMessageRef = useRef<number>(0);
+  const isCancelledRef = useRef(false);
 
   useEffect(() => {
     if (isStoredConversation) {
       setDisplayedMessages(messages.map(m => m.content));
-      messages.forEach(m => lastProcessedIds.current.add(m.id));
       return;
     }
 
-    let currentMessageIndex = 0;
-    let isCancelled = false;
+    // Only process the latest message
+    const currentIndex = messages.length - 1;
+    const message = messages[currentIndex];
 
-    const processNextMessage = async () => {
-      if (isCancelled || currentMessageIndex >= messages.length) {
-        isTypingRef.current = false;
-        return;
-      }
-
-      const message = messages[currentMessageIndex];
-
-      if (lastProcessedIds.current.has(message.id)) {
-        currentMessageIndex++;
-        processNextMessage();
-        return;
-      }
-
-      if (!message.isUser) {
-        isTypingRef.current = true;
-        const messageWords = message.content.split(" ");
-
-        for (let wordIndex = 0; wordIndex < messageWords.length; wordIndex++) {
-          if (isCancelled) break;
-
-          await new Promise(resolve => setTimeout(resolve, 50));
-
-          setDisplayedMessages(prev => {
-            const newMessages = [...prev];
-            newMessages[currentMessageIndex] = messageWords.slice(0, wordIndex + 1).join(" ");
-            return newMessages;
-          });
+    if (!message || message.isUser) {
+      setDisplayedMessages(prev => {
+        const newMessages = [...prev];
+        if (message) {
+          newMessages[currentIndex] = message.content;
         }
+        return newMessages;
+      });
+      return;
+    }
 
-        isTypingRef.current = false;
-        onFinishTyping?.();
-        onMessageTypingComplete(); 
-      } else {
+    let isCancelled = false;
+    currentMessageRef.current = currentIndex;
+
+    const typeMessage = async () => {
+      const words = message.content.split(" ");
+      for (let i = 0; i <= words.length; i++) {
+        if (isCancelled || currentMessageRef.current !== currentIndex) break;
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         setDisplayedMessages(prev => {
           const newMessages = [...prev];
-          newMessages[currentMessageIndex] = message.content;
+          newMessages[currentIndex] = words.slice(0, i).join(" ");
           return newMessages;
         });
       }
 
-      lastProcessedIds.current.add(message.id);
-      currentMessageIndex++;
-      processNextMessage();
+      if (!isCancelled && currentMessageRef.current === currentIndex) {
+        onFinishTyping?.();
+        onMessageTypingComplete();
+      }
     };
 
-    processNextMessage();
+    typeMessage();
 
     return () => {
       isCancelled = true;
@@ -119,7 +107,7 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
         const urlObj = new URL(part);
         let friendlyName = part;
 
-        
+
         if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
           friendlyName = urlObj.pathname.split('/').pop() || part;
         } else {

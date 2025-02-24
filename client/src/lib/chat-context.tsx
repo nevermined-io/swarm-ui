@@ -143,63 +143,58 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>(
     [...storedConversations].sort(
       (a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0)
-    ),
+    )
   );
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [showReasoningCollapse, setShowReasoningCollapse] = useState(false);
   const [isStoredConversation, setIsStoredConversation] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messageQueueRef = useRef<MockResponse[]>([]);
-  const isProcessingRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
-  const clearPendingTimeout = () => {
+  const clearTimeout = () => {
     if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+      window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
   };
 
   const processNextMessage = () => {
-    if (messageQueueRef.current.length === 0) {
-      isProcessingRef.current = false;
+    if (messageQueueRef.current.length === 0 || isTypingRef.current) {
       return;
     }
 
-    isProcessingRef.current = true;
-    const response = messageQueueRef.current.shift();
+    const nextMessage = messageQueueRef.current[0];
+    const agentMessage: Message & { txHash?: string } = {
+      id: messages.length + 1,
+      content: nextMessage.content,
+      type: nextMessage.type,
+      isUser: false,
+      conversationId: currentConversationId?.toString() || "new",
+      timestamp: new Date(),
+      txHash: nextMessage.txHash,
+    };
 
-    if (response) {
-      const agentMessage: Message & { txHash?: string } = {
-        id: messages.length + 1,
-        content: response.content,
-        type: response.type,
-        isUser: false,
-        conversationId: currentConversationId?.toString() || "new",
-        timestamp: new Date(),
-        txHash: response.txHash,
-      };
-
-      setMessages((prev) => [...prev, agentMessage]);
-    }
+    setMessages(prev => [...prev, agentMessage]);
+    isTypingRef.current = true;
   };
 
   const onMessageTypingComplete = () => {
-    // Remove the processed message from the queue
+    isTypingRef.current = false;
+    // Remove the message that just finished typing
+    messageQueueRef.current.shift();
 
     // If there are more messages, start the delay for the next one
     if (messageQueueRef.current.length > 0) {
-      const response = messageQueueRef.current[0];
-      timeoutRef.current = setTimeout(() => {
+      const nextMessage = messageQueueRef.current[0];
+      timeoutRef.current = window.setTimeout(() => {
         processNextMessage();
-        onMessageTypingComplete(); //recursive call to handle next message
-      }, response.timedelta);
-    } else {
-      isProcessingRef.current = false;
+      }, nextMessage.timedelta);
     }
   };
 
   const sendMessage = (content: string) => {
-    clearPendingTimeout();
+    clearTimeout();
     setIsStoredConversation(false);
 
     const userMessage: Message & { txHash?: string } = {
@@ -224,19 +219,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Queue all mock responses
+    // Reset queue and start new sequence
     messageQueueRef.current = [...mockResponsesData];
-
-    // Start processing if not already processing
-    if (!isProcessingRef.current) {
-      processNextMessage();
-    }
+    isTypingRef.current = false;
+    processNextMessage();
   };
 
   const loadStoredMessages = (conversationId: number) => {
     const storedConversationMessages = storedMessages[conversationId];
     if (storedConversationMessages) {
-      clearPendingTimeout();
+      clearTimeout();
       setMessages(storedConversationMessages);
       setShowReasoningCollapse(false);
       setIsStoredConversation(true);
@@ -244,7 +236,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSetCurrentConversationId = (id: number | null) => {
-    clearPendingTimeout();
+    clearTimeout();
     setCurrentConversationId(id);
     if (id !== null) {
       loadStoredMessages(id);
@@ -258,9 +250,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     handleSetCurrentConversationId(null);
   };
 
-
   useEffect(() => {
-    return () => clearPendingTimeout();
+    return () => clearTimeout();
   }, []);
 
   return (
