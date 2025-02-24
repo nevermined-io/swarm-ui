@@ -105,9 +105,17 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
         const urlObj = new URL(part);
         let friendlyName = part;
 
-        if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
+        // Check for Nevermined agent URLs with DID
+        const didMatch = part.match(/did:nv:[a-f0-9]+/);
+        if (didMatch) {
+          friendlyName = didMatch[0];
+        }
+        // Check for media files
+        else if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
           friendlyName = urlObj.pathname.split('/').pop() || part;
-        } else {
+        }
+        // Default case for other URLs
+        else {
           const domain = urlObj.hostname.replace('www.', '');
           const firstPath = urlObj.pathname.split('/')[1] || '';
           friendlyName = `${domain}${firstPath ? `/${firstPath}` : ''}`;
