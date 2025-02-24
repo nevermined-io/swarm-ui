@@ -202,14 +202,15 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
               const txMatch = text.match(/Tx: (0x[a-fA-F0-9]+)/);
               if (txMatch) {
                 const txHash = txMatch[1];
-                const costMatch = text.match(/(\d+(?:\.\d+)?\s*\$USDC)/);
-                const cost = costMatch ? costMatch[0] : "";
+                const costMatch = text.match(/(.+) for (.+) Tx:/);
+                const cost = costMatch ? costMatch[1] : "";
+                const purpose = costMatch ? costMatch[2] : "";
                 const explorerUrl = `https://sepolia.arbiscan.io/tx/${txHash}`;
                 return (
                   <div key={index} className="flex flex-col gap-2">
                     <span className="text-xs font-bold uppercase">Transaction</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">{cost} for 100 Song Generation credits</span>
+                      <span className="text-sm">{cost} for {purpose}</span>
                       <span className="text-sm text-muted-foreground">•</span>
                       <a
                         href={explorerUrl}
