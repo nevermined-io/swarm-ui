@@ -5,7 +5,9 @@ import { z } from "zod";
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  type: text("type", { enum: ["reasoning", "answer", "transaction"] }).notNull(),
+  type: text("type", {
+    enum: ["reasoning", "answer", "transaction", "error"],
+  }).notNull(),
   conversationId: text("conversation_id").notNull(),
   isUser: boolean("is_user").notNull(),
   timestamp: timestamp("timestamp").defaultNow(),

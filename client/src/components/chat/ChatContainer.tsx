@@ -1,5 +1,6 @@
 import { Switch, Route } from "wouter";
 import { useChat } from "@/lib/chat-context";
+import type { FullMessage } from "@/lib/chat-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MessageGroup from "./MessageGroup";
 import ChatInput from "./ChatInput";
@@ -14,17 +15,17 @@ import {
 import Sidebar from "./Sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Settings, HelpCircle, LogOut } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Settings,
+  HelpCircle,
+  LogOut,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Footer from "./Footer";
 import Logo from "./Logo";
-
-interface Message {
-  type: string;
-  isUser: boolean;
-  content: string;
-}
 
 export default function ChatContainer() {
   const { messages, conversations } = useChat();
@@ -43,7 +44,7 @@ export default function ChatContainer() {
   }, []);
 
   // Group messages by type sequences
-  const messageGroups = messages.reduce((groups: Message[][], message) => {
+  const messageGroups = messages.reduce((groups: FullMessage[][], message) => {
     const lastGroup = groups[groups.length - 1];
 
     if (
@@ -67,7 +68,7 @@ export default function ChatContainer() {
         className={cn(
           "transition-all duration-300 ease-in-out h-[calc(100vh-48px)]",
           sidebarOpen ? "w-full md:w-64" : "w-0",
-          "fixed md:relative z-40",
+          "fixed md:relative z-40"
         )}
       >
         {sidebarOpen && (
@@ -94,7 +95,7 @@ export default function ChatContainer() {
         className={cn(
           "flex-1 flex flex-col h-[calc(100vh-48px)] main-content",
           "transition-all duration-300 ease-in-out",
-          !sidebarOpen ? "w-full" : "hidden md:flex md:w-[calc(100%-16rem)]",
+          !sidebarOpen ? "w-full" : "hidden md:flex md:w-[calc(100%-16rem)]"
         )}
       >
         <div className="p-4 flex items-center justify-between bg-muted/80 border-b">

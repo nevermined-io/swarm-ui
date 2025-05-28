@@ -1,126 +1,64 @@
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Message } from "@shared/schema";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ChevronUp, ExternalLink, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useChat } from "@/lib/chat-context";
 import VideoPlayer from "./VideoPlayer";
 import AudioPlayer from "./AudioPlayer";
 import ImageGrid from "./ImageGrid";
+import type { FullMessage } from "@/lib/chat-context";
+import { useState } from "react";
+import { motion } from "framer-motion";
 
+/**
+ * MessageGroupProps for displaying a group of messages.
+ * @typedef {Object} MessageGroupProps
+ * @property {FullMessage[]} messages
+ * @property {boolean} [isFirstGroup]
+ * @property {() => void} [onFinishTyping]
+ */
 interface MessageGroupProps {
-  messages: (Message & { txHash?: string; id: number })[];
+  messages: FullMessage[];
   isFirstGroup?: boolean;
   onFinishTyping?: () => void;
 }
 
-export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }: MessageGroupProps) {
-  const [displayedMessages, setDisplayedMessages] = useState<string[]>(Array(messages.length).fill(""));
+// Utility to map mimeType to media type
+/**
+ * Maps a mimeType to a media type and component
+ * @param {string} mimeType
+ * @returns {"video" | "audio" | "images" | "text" | null}
+ */
+function getMediaTypeFromMime(mimeType: string) {
+  if (!mimeType) return null;
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("text/")) return "text";
+  if (mimeType.startsWith("image/")) return "images";
+  return null;
+}
+
+export default function MessageGroup({
+  messages,
+  isFirstGroup,
+}: MessageGroupProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { showReasoningCollapse, isStoredConversation, onMessageTypingComplete } = useChat();
-  const typedMessagesRef = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (isStoredConversation) {
-      setDisplayedMessages(messages.map(m => m.content));
-      messages.forEach(m => typedMessagesRef.current.add(m.id));
-      return;
-    }
-
-    // Process only the latest untypedMessage
-    const untypedMessageIndex = messages.findIndex(m => !typedMessagesRef.current.has(m.id));
-    if (untypedMessageIndex === -1) return;
-
-    const message = messages[untypedMessageIndex];
-    if (message.isUser) {
-      setDisplayedMessages(prev => {
-        const newMessages = [...prev];
-        newMessages[untypedMessageIndex] = message.content;
-        return newMessages;
-      });
-      typedMessagesRef.current.add(message.id);
-      return;
-    }
-
-    let isCancelled = false;
-
-    const typeMessage = async () => {
-      const words = message.content.split(" ");
-      for (let i = 0; i <= words.length; i++) {
-        if (isCancelled) break;
-
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        setDisplayedMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[untypedMessageIndex] = words.slice(0, i).join(" ");
-          return newMessages;
-        });
-      }
-
-      if (!isCancelled) {
-        typedMessagesRef.current.add(message.id);
-        onFinishTyping?.();
-        onMessageTypingComplete();
-      }
-    };
-
-    typeMessage();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [messages, isStoredConversation, onFinishTyping, onMessageTypingComplete]);
-
-  const detectMediaUrl = (text: string) => {
-    if (!text) return null;
-
-    const videoRegex = /https?:\/\/[^\s]+\.mp4\b/g;
-    const audioRegex = /https?:\/\/[^\s]+\.mp3\b/g;
-    const imageRegex = /https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)\b/g;
-
-    const videoMatch = text.match(videoRegex);
-    if (videoMatch) {
-      return { type: 'video' as const, urls: [videoMatch[0]] };
-    }
-
-    const audioMatch = text.match(audioRegex);
-    if (audioMatch) {
-      return { type: 'audio' as const, urls: [audioMatch[0]] };
-    }
-
-    const imageMatches = text.match(imageRegex);
-    if (imageMatches) {
-      return { type: 'images' as const, urls: imageMatches };
-    }
-
-    return null;
-  };
-
+  // Utility to create clickable links
   const createClickableLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.split(urlRegex).map((part, index) => {
       if (part.match(urlRegex)) {
         const urlObj = new URL(part);
         let friendlyName = part;
-
-        // Check for Nevermined agent URLs with DID
         const didMatch = part.match(/did:nv:[a-f0-9]+/);
         if (didMatch) {
           friendlyName = didMatch[0];
+        } else if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
+          friendlyName = urlObj.pathname.split("/").pop() || part;
+        } else {
+          const domain = urlObj.hostname.replace("www.", "");
+          const firstPath = urlObj.pathname.split("/")[1] || "";
+          friendlyName = `${domain}${firstPath ? `/${firstPath}` : ""}`;
         }
-        // Check for media files
-        else if (part.match(/\.(jpg|jpeg|png|gif|webp|mp3|mp4)$/i)) {
-          friendlyName = urlObj.pathname.split('/').pop() || part;
-        }
-        // Default case for other URLs
-        else {
-          const domain = urlObj.hostname.replace('www.', '');
-          const firstPath = urlObj.pathname.split('/')[1] || '';
-          friendlyName = `${domain}${firstPath ? `/${firstPath}` : ''}`;
-        }
-
         return (
           <a
             key={index}
@@ -138,102 +76,207 @@ export default function MessageGroup({ messages, isFirstGroup, onFinishTyping }:
     });
   };
 
-  const isReasoningGroup = !messages[0].isUser && messages[0].type === "reasoning";
-  const isAnswerGroup = !messages[0].isUser && messages[0].type === "answer";
-  const shouldShowCollapseButton = isReasoningGroup;
-
-  if (isCollapsed && isReasoningGroup) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-        onClick={() => setIsCollapsed(false)}
-      >
-        <ChevronDown className="w-4 h-4" />
-        Show reasoning
-      </Button>
-    );
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
-        messages[0].isUser ? "ml-auto max-w-[80%]" : isAnswerGroup ? "w-full" : "mr-auto max-w-[80%]",
+        messages[0].isUser
+          ? "ml-auto max-w-[80%]"
+          : messages[0].type === "answer"
+          ? "w-full"
+          : "mr-auto max-w-[80%]",
         isFirstGroup && "mt-4"
       )}
     >
-      <div
-        className={cn(
-          "p-4 whitespace-pre-line",
-          messages[0].isUser
-            ? "user-message bg-primary text-primary-foreground rounded-lg"
-            : messages[0].type === "reasoning"
-            ? "bg-muted text-muted-foreground rounded-lg"
-            : messages[0].type === "transaction"
-            ? "bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium"
-            : "text-card-foreground"
-        )}
-      >
-        {shouldShowCollapseButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-1 -mt-1 -ml-1 hover:bg-transparent"
-            onClick={() => setIsCollapsed(true)}
-          >
-            <ChevronUp className="w-4 h-4" />
-          </Button>
-        )}
-        <div className="space-y-4">
-          {displayedMessages.map((text, index) => {
-            const mediaContent = detectMediaUrl(text);
-            const message = messages[index];
-
-            if (message?.type === "transaction") {
-              const explorerUrl = `https://sepolia.arbiscan.io/tx/${message.txHash}`;
-              return (
-                <div key={index} className="flex flex-col gap-2">
-                  <span className="text-xs font-bold uppercase">Transaction</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{text}</span>
-                    <span className="text-sm text-muted-foreground">•</span>
+      {/* Reasoning: Expand/Collapse */}
+      {messages[0].type === "reasoning" && isCollapsed ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          onClick={() => setIsCollapsed(false)}
+        >
+          <ChevronDown className="w-4 h-4" />
+          Show reasoning
+        </Button>
+      ) : (
+        <div
+          className={cn(
+            "p-4 whitespace-pre-line",
+            messages[0].isUser
+              ? "user-message bg-primary text-primary-foreground rounded-lg"
+              : messages[0].type === "reasoning"
+              ? "bg-muted text-muted-foreground rounded-lg text-xs relative pl-10 pr-4 py-4"
+              : messages[0].type === "transaction"
+              ? "bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium"
+              : messages[0].type === "error"
+              ? "bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-medium p-3"
+              : messages[0].type === "warning"
+              ? "bg-orange-400/10 text-orange-500 border border-orange-400/20 rounded-lg font-medium p-3"
+              : "text-card-foreground"
+          )}
+        >
+          {/* Collapse button for reasoning */}
+          {messages[0].type === "reasoning" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-2 left-2 -ml-2 hover:bg-transparent"
+              onClick={() => setIsCollapsed(true)}
+            >
+              <ChevronUp className="w-4 h-4" />
+            </Button>
+          )}
+          <div className="space-y-4">
+            {messages.map((message, index) => {
+              const text = message.content;
+              // Check for artifacts if type is 'answer'
+              let mediaContent = null;
+              if (message.type === "answer" && (message as any).artifacts) {
+                const artifacts = (message as any).artifacts;
+                const mediaType = getMediaTypeFromMime(artifacts.mimeType);
+                if (mediaType && Array.isArray(artifacts.parts)) {
+                  mediaContent = { type: mediaType, urls: artifacts.parts };
+                }
+              }
+              if (message.type === "transaction") {
+                const explorerUrl = `https://sepolia.arbiscan.io/tx/${message.txHash}`;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col gap-2 relative"
+                  >
+                    <span className="text-xs font-bold uppercase">
+                      Transaction
+                    </span>
                     <a
                       href={explorerUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm flex items-center gap-1 hover:underline"
+                      className="absolute top-0 right-0 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-green-200"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {`${message.txHash?.slice(0, 6)}...${message.txHash?.slice(-4)}`}
+                      {`${message.txHash?.slice(
+                        0,
+                        6
+                      )}...${message.txHash?.slice(-4)}`}
                       <ExternalLink className="w-3 h-3" />
                     </a>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-sm flex-1">{text}</span>
+                    </div>
+                  </motion.div>
+                );
+              }
+              if (message.type === "error") {
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col gap-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-medium p-3"
+                  >
+                    <span className="text-xs font-bold uppercase">Error</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{text}</span>
+                    </div>
+                  </motion.div>
+                );
+              }
+              if (message.type === "warning") {
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-2 bg-orange-400/10 text-orange-500 border border-orange-400/20 rounded-lg font-medium p-3"
+                  >
+                    <span className="text-xs font-bold uppercase">Warning</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{text}</span>
+                    </div>
                   </div>
+                );
+              }
+              if (message.type === "callAgent") {
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col gap-2 bg-blue-100/80 text-blue-800 border border-blue-300 rounded-lg font-medium p-3 relative"
+                  >
+                    <span className="absolute top-2 left-2 text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded font-semibold shadow-sm border border-blue-300">
+                      Agent Call
+                    </span>
+                    <div className="flex items-center gap-2 mt-6">
+                      <span className="text-xs">{text}</span>
+                    </div>
+                  </motion.div>
+                );
+              }
+              return (
+                <div key={index}>
+                  <div className="whitespace-pre-line">
+                    {text && createClickableLinks(text)}
+                  </div>
+                  {mediaContent?.type === "video" && (
+                    <VideoPlayer src={mediaContent.urls[0]} />
+                  )}
+                  {mediaContent?.type === "audio" && (
+                    <AudioPlayer src={mediaContent.urls[0]} />
+                  )}
+                  {mediaContent?.type === "images" && (
+                    <ImageGrid images={mediaContent.urls} />
+                  )}
+                  {mediaContent?.type === "text" && (
+                    <CollapsibleTextBlock text={mediaContent.urls[0]} />
+                  )}
                 </div>
               );
-            }
-
-            return (
-              <div key={index}>
-                <div className="whitespace-pre-line">
-                  {text && createClickableLinks(text)}
-                </div>
-                {mediaContent?.type === 'video' && (
-                  <VideoPlayer src={mediaContent.urls[0]} />
-                )}
-                {mediaContent?.type === 'audio' && (
-                  <AudioPlayer src={mediaContent.urls[0]} />
-                )}
-                {mediaContent?.type === 'images' && (
-                  <ImageGrid images={mediaContent.urls} />
-                )}
-              </div>
-            );
-          })}
+            })}
+          </div>
         </div>
-      </div>
-    </motion.div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * CollapsibleTextBlock renders a long text in a collapsible, monospaced block.
+ * @param {{ text: string }} props
+ */
+function CollapsibleTextBlock({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const lines = text.split("\n");
+  const previewLines = 8;
+  const isLong = lines.length > previewLines;
+  const displayText = expanded ? text : lines.slice(0, previewLines).join("\n");
+
+  return (
+    <div
+      className="bg-muted rounded p-2 mt-2 text-xs text-muted-foreground font-mono"
+      style={{
+        fontFamily: "Courier New, Courier, monospace",
+        whiteSpace: "pre",
+        overflowX: "auto",
+      }}
+    >
+      {displayText}
+      {isLong && (
+        <div className="mt-2 text-right">
+          <button
+            className="text-primary underline text-xs cursor-pointer"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded
+              ? "Collapse"
+              : `Show more (${lines.length - previewLines} more lines)`}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
