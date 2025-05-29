@@ -26,12 +26,52 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Footer from "./Footer";
 import Logo from "./Logo";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+
+/**
+ * Custom hook to fetch and manage user credit.
+ * Loads credit on mount and provides a reload function.
+ * Listens for new messages of type 'nvm-transaction', 'answer' or 'error' to reload credit.
+ * @returns {{ credit: number, reloadCredit: () => void, loading: boolean }}
+ */
+function useCredit(messages: FullMessage[]) {
+  const fetchCredit = async () => {
+    const res = await fetch("/api/credit", { credentials: "include" });
+    if (!res.ok) throw new Error("Could not fetch credit");
+    const data = await res.json();
+    return data.credit;
+  };
+
+  const {
+    data: credit = 0,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["credit"],
+    queryFn: fetchCredit,
+    refetchOnWindowFocus: false,
+  });
+
+  // Reload credit when a relevant message is received
+  useEffect(() => {
+    if (!messages.length) return;
+    const last = messages[messages.length - 1];
+    if (["nvm-transaction", "answer", "error"].includes(last.type)) {
+      refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
+
+  return { credit, reloadCredit: refetch, loading: isFetching };
+}
 
 export default function ChatContainer() {
   const { messages, conversations } = useChat();
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { credit, loading } = useCredit(messages);
 
   const handleFinishTyping = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -115,6 +155,19 @@ export default function ChatContainer() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {/* Available credit badge */}
+            <Badge
+              variant="secondary"
+              className={
+                loading
+                  ? "min-w-[60px] justify-center text-gray-400"
+                  : credit === 0
+                  ? "min-w-[60px] justify-center text-red-500"
+                  : "min-w-[60px] justify-center text-green-600"
+              }
+            >
+              {loading ? "..." : `${credit} credits`}
+            </Badge>
             {!sidebarOpen && <Logo />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

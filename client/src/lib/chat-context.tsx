@@ -201,6 +201,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     clearTimer();
     setIsStoredConversation(false);
 
+    // Add the user message to the chat
     const userMessage: FullMessage = {
       id: messages.length,
       content,
@@ -209,10 +210,96 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       conversationId: currentConversationId?.toString() || "new",
       timestamp: new Date(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
     setShowReasoningCollapse(false);
 
+    // Call the LLM router before sending to the agent
+    let llmAction: "forward" | "no_credit" | "order_plan" | "no_action" =
+      "forward";
+    let llmReason = "";
+    try {
+      const resp = await fetch("/api/llm-router", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: content,
+          history: messages,
+        }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        llmAction = data.action;
+        llmReason = data.message || "";
+      }
+    } catch (e) {
+      llmAction = "forward";
+    }
+
+    if (llmAction === "no_credit") {
+      // Show error message in the chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          content: llmReason || "You have no credits. Please top up your plan.",
+          type: "error",
+          isUser: false,
+          conversationId: currentConversationId?.toString() || "new",
+          timestamp: new Date(),
+        },
+      ]);
+      return;
+    }
+
+    if (llmAction === "order_plan") {
+      // Call /order-plan and show the response
+      try {
+        const resp = await fetch("/api/order-plan", { method: "POST" });
+        const data = await resp.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            content: data.message || "Plan ordered successfully.",
+            type: "nvm-transaction",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+          },
+        ]);
+      } catch (e) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            content: "Error ordering plan.",
+            type: "error",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+          },
+        ]);
+      }
+      return;
+    }
+
+    if (llmAction === "no_action") {
+      // Add the LLM's message as an 'answer' type in the chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          content: llmReason || "",
+          type: "answer",
+          isUser: false,
+          conversationId: currentConversationId?.toString() || "new",
+          timestamp: new Date(),
+        },
+      ]);
+      return;
+    }
+
+    // If the LLM says 'forward', follow the normal flow (as now)
     if (!currentConversationId) {
       // Get synthesized title from backend
       let title = content.slice(0, 30) + "...";
@@ -238,7 +325,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Real orchestrator integration
+    // Real orchestrator integration (TODO: remove this)
     try {
       const taskId = await sendTaskToOrchestrator(content);
 
@@ -249,7 +336,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       // Subscribe to SSE for this task
       sseUnsubscribeRef.current = subscribeToTaskEvents(taskId, (data) => {
-        // You may need to adapt this depending on the event structure
+        // TODO: adapt this depending on the event structure
         const agentMessage: FullMessage = {
           id: messages.length + 1,
           content: data.content,
@@ -292,7 +379,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       });
     } catch (error) {
-      // Handle error (show error message, etc.)
+      // TODO: Handle error (show error message, etc.)
       console.error(error);
     }
   };
@@ -310,7 +397,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const handleSetCurrentConversationId = (id: number | null) => {
     clearTimer();
     setCurrentConversationId(id);
-    // Clean up SSE connection when changing conversation
+    // Clean up SSE connection when changing conversation (TODO: remove this)
     if (sseUnsubscribeRef.current) {
       sseUnsubscribeRef.current();
       sseUnsubscribeRef.current = null;
@@ -327,7 +414,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return () => {
       clearTimer();
-      // Clean up SSE connection on unmount
+      // Clean up SSE connection on unmount (TODO: remove this)
       if (sseUnsubscribeRef.current) {
         sseUnsubscribeRef.current();
         sseUnsubscribeRef.current = null;
