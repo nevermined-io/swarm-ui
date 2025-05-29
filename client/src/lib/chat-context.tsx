@@ -15,10 +15,12 @@ import { Message, Conversation } from "@shared/schema";
  * @property {string} conversationId
  * @property {Date | null} timestamp
  * @property {boolean} isUser
- * @property {"reasoning" | "answer" | "transaction" | "error" | "warning" | "callAgent"} type
+ * @property {"reasoning" | "answer" | "transaction" | "nvm-transaction" | "error" | "warning" | "callAgent"} type
  * @property {string} content
  * @property {string} [txHash]
  * @property {{ mimeType: string; parts: string[] }} [artifacts]
+ * @property {number} [credits]
+ * @property {string} [planDid]
  */
 export interface FullMessage {
   id: number;
@@ -29,11 +31,20 @@ export interface FullMessage {
     | "reasoning"
     | "answer"
     | "transaction"
+    | "nvm-transaction"
     | "error"
     | "warning"
     | "callAgent";
   content: string;
   txHash?: string;
+  /**
+   * Credits consumed in nvm-transaction
+   */
+  credits?: number;
+  /**
+   * Plan DID for nvm-transaction
+   */
+  planDid?: string;
   /**
    * Optional artifacts for media or extra data (images, audio, video, text, etc)
    * @type {{ mimeType: string; parts: string[] }}
@@ -248,6 +259,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           timestamp: new Date(),
           txHash: data.txHash,
           artifacts: data.artifacts,
+          credits: data.credits,
+          planDid: data.planDid,
         };
         setMessages((prev) => {
           // Avoid duplicates by content, type and txHash

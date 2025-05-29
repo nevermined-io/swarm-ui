@@ -7,9 +7,9 @@ interface VideoPlayerProps {
 
 export default function VideoPlayer({ src, className }: VideoPlayerProps) {
   return (
-    <video 
+    <video
       controls
-      className={cn("w-full rounded-lg mt-4", className)}
+      className={cn("w-full max-w-md mx-auto rounded-lg mt-4", className)}
     >
       <source src={src} type="video/mp4" />
       Your browser does not support the video tag.

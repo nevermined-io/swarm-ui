@@ -146,26 +146,28 @@ export default function MessageGroup({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="flex flex-col gap-2 relative"
+                    className="flex flex-col gap-2 relative bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium p-3"
                   >
-                    <span className="text-xs font-bold uppercase">
-                      Transaction
-                    </span>
-                    <a
-                      href={explorerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute top-0 right-0 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-green-200"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {`${message.txHash?.slice(
-                        0,
-                        6
-                      )}...${message.txHash?.slice(-4)}`}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <span className="text-xs font-bold uppercase whitespace-nowrap">
+                        Transaction
+                      </span>
+                      <a
+                        href={explorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-green-200 whitespace-nowrap ml-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {`${message.txHash?.slice(
+                          0,
+                          6
+                        )}...${message.txHash?.slice(-4)}`}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm flex-1">{text}</span>
+                      <span className="text-xs flex-1">{text}</span>
                     </div>
                   </motion.div>
                 );
@@ -213,6 +215,65 @@ export default function MessageGroup({
                     </span>
                     <div className="flex items-center gap-2 mt-6">
                       <span className="text-xs">{text}</span>
+                    </div>
+                  </motion.div>
+                );
+              }
+              if (message.type === "nvm-transaction") {
+                const explorerUrl = `https://sepolia.arbiscan.io/tx/${message.txHash}`;
+                const credits = Number(message.credits);
+                const planDid = message.planDid
+                  ? String(message.planDid)
+                  : undefined;
+                const planUrl = planDid
+                  ? `https://testing.nevermined.app/en/plan/${planDid}`
+                  : null;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col gap-2 relative bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium p-3"
+                  >
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <span className="text-xs font-bold uppercase whitespace-nowrap">
+                        NVM Transaction
+                      </span>
+                      <div className="flex items-center gap-2 ml-auto">
+                        {credits > 0 && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-mono border border-blue-200 whitespace-nowrap">
+                            {credits} credit{credits > 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {planUrl && (
+                          <a
+                            href={planUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-mono border border-gray-200 hover:underline whitespace-nowrap"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Plan
+                          </a>
+                        )}
+                        <a
+                          href={explorerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-green-200 whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {`${message.txHash?.slice(
+                            0,
+                            6
+                          )}...${message.txHash?.slice(-4)}`}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs flex-1">{text}</span>
                     </div>
                   </motion.div>
                 );

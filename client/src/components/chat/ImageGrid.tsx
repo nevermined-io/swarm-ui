@@ -12,7 +12,12 @@ export default function ImageGrid({ images, className }: ImageGridProps) {
 
   return (
     <>
-      <div className={cn("grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4", className)}>
+      <div
+        className={cn(
+          "grid gap-2 mt-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8",
+          className
+        )}
+      >
         {images.map((image, index) => (
           <button
             key={index}
@@ -22,13 +27,16 @@ export default function ImageGrid({ images, className }: ImageGridProps) {
             <img
               src={image}
               alt={`Generated image ${index + 1}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover max-w-[180px] max-h-[180px] mx-auto"
             />
           </button>
         ))}
       </div>
 
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog
+        open={!!selectedImage}
+        onOpenChange={() => setSelectedImage(null)}
+      >
         <DialogContent className="max-w-4xl w-[90vw] p-0">
           {selectedImage && (
             <img
