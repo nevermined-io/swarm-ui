@@ -66,7 +66,7 @@ export async function hasSufficientERC20Balance(
 export async function findMintEvent(
   contractAddress: string,
   toWallet: string,
-  tokenId: string | number,
+  tokenId: string,
   fromBlock: number | string = 0
 ): Promise<{ txHash: string; value: string } | null> {
   const provider = getProvider();
@@ -78,9 +78,9 @@ export async function findMintEvent(
   const filter = contract.filters.TransferSingle(null, mintAddress, toWallet);
   const events = await contract.queryFilter(filter, fromBlock, "latest");
   const filtered = events.find(
-    (ev: any) => ev.args && ev.args.id.toString() === tokenId.toString()
+    (ev: any) => ev.args && ev.args.id.toString() === tokenId
   );
-  if (filtered && filter.args) {
+  if (filtered && filtered.args) {
     return {
       txHash: filtered.transactionHash,
       value: filtered.args.value.toString(),

@@ -1,48 +1,29 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { llmRouter } from "./services/llmService";
-import { getCredits } from "./services/paymentsService";
-import OpenAI from "openai";
-import { Payments, EnvironmentName } from "@nevermined-io/payments";
+import { llmRouter, llmTitleSummarizer } from "./services/llmService";
+import {
+  getUserCredits,
+  createTask,
+  orderPlanCredits,
+} from "./services/paymentsService";
+import { llmIntentSynthesizer } from "./services/llmService";
 
 /**
  * POST /api/title/summarize
- * Sintetiza el input del usuario en un título usando OpenAI
- * @param {string} input - El input original del usuario
- * @returns {string} title - El título sintetizado
+ * Synthesizes the user's input into a title using OpenAI, using the conversation history
+ * @param {Array<{role: string, content: string}>} history - The conversation history
+ * @returns {string} title - The synthesized title
  */
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
-
   app.post("/api/title/summarize", async (req, res) => {
     try {
-      const { input } = req.body;
+      const { history } = req.body;
 
-      if (!input || typeof input !== "string") {
-        return res.status(400).json({ error: "Missing or invalid input" });
+      if (!Array.isArray(history)) {
+        return res.status(400).json({ error: "Missing or invalid history" });
       }
 
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-
-      const prompt = `Summarize the following user request into a short, catchy title (max 10 words):\n"${input}"\nTitle:`;
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a helpful assistant that creates short, catchy titles for user requests. For example, if the user request is 'Create a music video about a redhead girl', the title should be 'Redhead Girl Music Video'.",
-          },
-          { role: "user", content: prompt },
-        ],
-        max_tokens: 16,
-        temperature: 0.7,
-      });
-      const title =
-        completion.choices[0]?.message?.content?.trim() || "Untitled";
+      const title = await llmTitleSummarizer(history);
       res.json({ title });
     } catch (err) {
       res.status(500).json({ error: "Failed to generate title" });
@@ -56,15 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.get("/api/credit", async (req, res) => {
     try {
-      const nvmApiKey = process.env.NVM_API_KEY;
-      const environment = process.env.NVM_ENVIRONMENT || "testing";
-      const planDid = process.env.PLAN_DID;
-      if (!nvmApiKey || !planDid) {
-        return res
-          .status(500)
-          .json({ error: "Missing Nevermined API key or plan DID" });
-      }
-      const credit = await getCredits(nvmApiKey, environment, planDid);
+      const credit = await getUserCredits();
       res.json({ credit });
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch credit" });
@@ -84,15 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing message" });
     }
     try {
-      const nvmApiKey = process.env.NVM_API_KEY;
-      const environment = process.env.NVM_ENVIRONMENT || "testing";
-      const planDid = process.env.PLAN_DID;
-      if (!nvmApiKey || !planDid) {
-        return res
-          .status(500)
-          .json({ error: "Missing Nevermined API key or plan DID" });
-      }
-      const credits = await getCredits(nvmApiKey, environment, planDid);
+      const credits = await getUserCredits();
       const result = await llmRouter(message, history, credits);
       return res.json(result);
     } catch (err) {
@@ -108,40 +73,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * @returns {string} message - Confirmation message
    */
   app.post("/api/order-plan", async (req, res) => {
-    res.json({ message: "Plan purchased successfully. You now have credits!" });
+    const planDid = process.env.PLAN_DID;
+    if (!planDid) {
+      return res.status(500).json({ error: "Missing plan DID" });
+    }
+    const result = await orderPlanCredits(planDid);
+    if (result.success) {
+      res.json({
+        message:
+          result.message ||
+          "Plan purchased successfully. You now have credits!",
+        txHash: result.txHash,
+        credits: result.credits,
+        planDid,
+      });
+    } else {
+      res.status(500).json({ error: result.message });
+    }
+  });
+
+  /**
+   * POST /api/intent/synthesize
+   * Synthesizes the user's intent from the conversation history using OpenAI
+   * @body {Array<{role: string, content: string}>} history - The conversation history
+   * @returns {string} intent - The synthesized intent
+   */
+  app.post("/api/intent/synthesize", async (req, res) => {
+    try {
+      const { history } = req.body;
+      if (!Array.isArray(history)) {
+        return res.status(400).json({ error: "Missing or invalid history" });
+      }
+      const intent = await llmIntentSynthesizer(history);
+      res.json({ intent });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to synthesize intent" });
+    }
+  });
+
+  /**
+   * POST /api/orchestrator-task
+   * Creates an orchestrator task using the payments library and returns the task_id.
+   * @body {string} input_query - The user's message
+   * @returns {object} - { task: { task_id: string } }
+   */
+  app.post("/api/orchestrator-task", async (req, res) => {
+    const { input_query } = req.body;
+    if (typeof input_query !== "string") {
+      return res.status(400).json({ error: "Missing input_query" });
+    }
+
+    try {
+      const task_id = await createTask(input_query);
+      return res.status(200).json({ task: { task_id } });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ error: "Failed to create orchestrator task" });
+    }
   });
 
   const httpServer = createServer(app);
 
   return httpServer;
-}
-
-/**
- * Initializes the Nevermined Payments library.
- * @param {string} nvmApiKey - Nevermined API key
- * @param {string} environment - testing, staging or production
- * @returns {Payments} - Authenticated Payments instance
- */
-function initializePayments(nvmApiKey: string, environment: string): Payments {
-  const payments = Payments.getInstance({
-    nvmApiKey,
-    environment: environment as EnvironmentName,
-  });
-  if (!payments.isLoggedIn) {
-    throw new Error("Failed to log in to the Nevermined Payments Library");
-  }
-  return payments;
-}
-
-async function getUserCredits(): Promise<number> {
-  const nvmApiKey = process.env.NVM_API_KEY;
-  const environment = process.env.NVM_ENVIRONMENT || "testing";
-  const planDid = process.env.PLAN_DID;
-  if (!nvmApiKey || !planDid) {
-    throw new Error("Missing Nevermined API key or plan DID");
-  }
-  const payments = initializePayments(nvmApiKey, environment);
-  const balanceResult = await payments.getPlanBalance(planDid);
-  const credit = parseInt(balanceResult.balance.toString());
-  return credit;
 }

@@ -9,10 +9,16 @@ export default function Footer() {
           © {new Date().getFullYear()} Nevermined | Pay. All rights reserved.
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/terms" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Link
+            href="/terms"
+            className="hover:text-foreground transition-colors flex items-center gap-1"
+          >
             Terms & Conditions
           </Link>
-          <Link href="/help" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Link
+            href="/help"
+            className="hover:text-foreground transition-colors flex items-center gap-1"
+          >
             <HelpCircle className="h-4 w-4" />
             Help
           </Link>

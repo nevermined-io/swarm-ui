@@ -153,22 +153,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Send a message to the orchestrator and return the created task ID.
+   * Send a message to the orchestrator via backend proxy and return the created task ID.
    * @param content The user message to send.
    * @returns Promise resolving to the task ID.
    */
   async function sendTaskToOrchestrator(content: string): Promise<string> {
-    const response = await fetch(
-      "https://2s3jvaxtourejf4vxorc0hkvk3xosbvhnjobdramnox9kinsnc.proxy.testing.nevermined.app/api/v1/agents/did:nv:6f8f6b28e83a97ae789b2387681cc7d82baddaf2f20ae939bbebe15f3d84e2c8/tasks",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..HaHK74__bRVaKsYq6oZR5g.m2fQrTq0MyEogC6HW21RV9VDRGXMXRM3G-XanCnNo7sHvDrs3fRj0dSnDX8Cka7UxtayHzByBQyymeQ24-rYIQkU23_humytSnA7Tghr0--OTF0B8C3idcvt3U2DoBWPWR0Gq8iXIm-O6bnrDuB8322jTon5B8S7dAlKxOKhA29W-9Hw71jk41TLTID1OmD6pUrImpfM7C_PcdCrWaLt0KGIbzr2_UeEbAGIu8YVyXHlBHpxP7hN82mWQd9jko9nT2yAYJQHVcgJhKHrug1SZ1kzFl6q88qUEeeEPpBflBNGI7Oci1aSYsIxHSyD2_mMaP6VnrYVOZX4YVZrY-RCf4kNq5d_159upWIawf_e2PwZQ6lAy5OzZI3YwC3Q3gLXGGZj_KKdZr5X347CKnB_lRlz5uSUbAHnliINBp-WYRhpsWbM9-slnwLb3QS7WlGsF4YuhB8IeztUlnWW2FML0z-73is9cK7xAALBDuiOZ70qULa9ZNMt-HvPFUvs-LP26JE_oM0JsZ7QX1wQfT_zfDXu8PAnwd8MGrRXpouE6a57WvP1vTvk3dzPxs7KBssBsJ0t11ThdbkVvCpeH0lfkL2gsPP_6OPk-F12Q8sLPFhdvw-POULKGNbQa8IdH7HsvbXxq_S7OZG6NKIDo6ItsK6jz8gpjidIX2wMRTsbojl4lq6wMi_rjN8xb_N1uipM_SDY5OouuIL4K1OU6PSOZT5Cv46_LhBMH3EnO_Sjzwwr37synDNqWyvfYVm7vneDZUVDQaqsqsLmlOy6SyUGVaxsNrY2O8m_H1GCkoFguezLpHddre9Dl-jer7p7b0GchNXyeJnO5Nf9kGY6343YaFolg11wdIQFe7JjOg2dTdCK1OI-o80ZEwhe55El8OajVbk-DXZtR1B3dKa7dhZE4e4uuPpAcpeOuTH50AzbGiAe73DA5vwPZWEAKUKrWMbH-RnBGmLqOXhuETrhTY2PiIcgRjWFgMMR6w2W-jhr5Ya2JPvu_0C0hKh4WPvp5sqqBMcK3RV55B4ylvkloxmQOPuHUAI7tMcTPmXjydsRvaQ.h1kF8Pmu9sHtBafx9qYVNA`,
-        },
-        body: JSON.stringify({ input_query: content }),
-      }
-    );
+    const response = await fetch("/api/orchestrator-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input_query: content }),
+    });
     if (!response.ok) throw new Error("Failed to send message to orchestrator");
     const data = await response.json();
     return data.task.task_id;
@@ -252,21 +246,56 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
 
     if (llmAction === "order_plan") {
-      // Call /order-plan and show the response
       try {
         const resp = await fetch("/api/order-plan", { method: "POST" });
         const data = await resp.json();
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            content: data.message || "Plan ordered successfully.",
-            type: "nvm-transaction",
-            isUser: false,
-            conversationId: currentConversationId?.toString() || "new",
-            timestamp: new Date(),
-          },
-        ]);
+
+        if (data.txHash) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: prev.length + 1,
+              content: data.message || "Plan ordered successfully.",
+              type: "nvm-transaction",
+              isUser: false,
+              conversationId: currentConversationId?.toString() || "new",
+              timestamp: new Date(),
+              txHash: data.txHash,
+              credits: data.credits,
+              planDid: data.planDid,
+            },
+            {
+              id: prev.length + 2,
+              content:
+                "You can now generate your music video! Write your prompt to continue.",
+              type: "answer",
+              isUser: false,
+              conversationId: currentConversationId?.toString() || "new",
+              timestamp: new Date(),
+            },
+          ]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: prev.length + 1,
+              content: data.message || "Plan ordered successfully.",
+              type: "answer",
+              isUser: false,
+              conversationId: currentConversationId?.toString() || "new",
+              timestamp: new Date(),
+            },
+            {
+              id: prev.length + 2,
+              content:
+                "You can now generate your music video! Write your prompt to continue.",
+              type: "answer",
+              isUser: false,
+              conversationId: currentConversationId?.toString() || "new",
+              timestamp: new Date(),
+            },
+          ]);
+        }
       } catch (e) {
         setMessages((prev) => [
           ...prev,
@@ -307,7 +336,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const resp = await fetch("/api/title/summarize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: content }),
+          body: JSON.stringify({ history: messages }),
         });
         if (resp.ok) {
           const data = await resp.json();
@@ -325,9 +354,28 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(newConversation.id);
     }
 
-    // Real orchestrator integration (TODO: remove this)
+    // --- INTEGRATION: Use intent synthesis for agent prompt ---
+    let agentPrompt = content;
     try {
-      const taskId = await sendTaskToOrchestrator(content);
+      // Call backend to synthesize the user's intent from the conversation history
+      const synthRes = await fetch("/api/intent/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history: messages }),
+      });
+      if (synthRes.ok) {
+        const data = await synthRes.json();
+        if (data.intent) agentPrompt = data.intent;
+      }
+    } catch (e) {
+      // If synthesis fails, fallback to last message
+      agentPrompt = content;
+    }
+    // --------------------------------------------------------
+
+    try {
+      // Send the synthesized intent (or fallback) to the agent
+      const taskId = await sendTaskToOrchestrator(agentPrompt);
 
       // Clean up previous SSE connection if any
       if (sseUnsubscribeRef.current) {
@@ -336,7 +384,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       // Subscribe to SSE for this task
       sseUnsubscribeRef.current = subscribeToTaskEvents(taskId, (data) => {
-        // TODO: adapt this depending on the event structure
         const agentMessage: FullMessage = {
           id: messages.length + 1,
           content: data.content,
@@ -379,7 +426,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       });
     } catch (error) {
-      // TODO: Handle error (show error message, etc.)
       console.error(error);
     }
   };
