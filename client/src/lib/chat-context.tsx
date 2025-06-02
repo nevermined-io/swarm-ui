@@ -435,7 +435,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               ];
             }
 
-            // If the message is a final answer, return the message pero también lanza la actualización de créditos y burnTx en background
+            // If the message is a final answer, return the message and update the credits and burnTx in background
             if (agentMessage.type === "final-answer") {
               (async () => {
                 const burnTxData = await updateCreditsAndGetBurnTx(
@@ -466,9 +466,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       );
 
       // Find the burn transaction for the current plan and wallet from a given block. Send fromBlock as query parameter.
-      const burnTxResp = await getBurnTransaction(blockNumber);
-      if (burnTxResp.ok) {
-        const burnTxData = await burnTxResp.json();
+      const burnTxData = await getBurnTransaction(blockNumber);
+      if (burnTxData) {
         setMessages((prev) => [
           ...prev,
           {
