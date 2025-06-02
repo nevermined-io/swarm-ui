@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import VideoPlayer from "./VideoPlayer";
 import AudioPlayer from "./AudioPlayer";
 import ImageGrid from "./ImageGrid";
-import type { FullMessage } from "@/lib/chat-context";
+import type { FullMessage } from "@/lib/chat-types";
 import { useState } from "react";
 import { motion } from "framer-motion";
 

@@ -1,7 +1,5 @@
-import { Switch, Route } from "wouter";
 import { useChat } from "@/lib/chat-context";
-import type { FullMessage } from "@/lib/chat-context";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import type { FullMessage } from "@/lib/chat-types";
 import MessageGroup from "./MessageGroup";
 import ChatInput from "./ChatInput";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

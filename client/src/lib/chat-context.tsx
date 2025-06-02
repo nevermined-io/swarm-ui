@@ -6,67 +6,11 @@ import {
   useRef,
   ReactNode,
 } from "react";
-import { Message, Conversation } from "@shared/schema";
-
-/**
- * FullMessage for chat context, compatible with all message types including 'warning'.
- * @typedef {Object} FullMessage
- * @property {number} id
- * @property {string} conversationId
- * @property {Date | null} timestamp
- * @property {boolean} isUser
- * @property {"reasoning" | "answer" | "transaction" | "nvm-transaction-user" | "nvm-transaction-agent" | "error" | "warning" | "callAgent"} type
- * @property {string} content
- * @property {string} [txHash]
- * @property {{ mimeType: string; parts: string[] }} [artifacts]
- * @property {number} [credits]
- * @property {string} [planDid]
- */
-export interface FullMessage {
-  id: number;
-  conversationId: string;
-  timestamp: Date | null;
-  isUser: boolean;
-  type:
-    | "reasoning"
-    | "answer"
-    | "transaction"
-    | "nvm-transaction-user"
-    | "nvm-transaction-agent"
-    | "error"
-    | "warning"
-    | "callAgent";
-  content: string;
-  txHash?: string;
-  /**
-   * Credits consumed in nvm-transaction
-   */
-  credits?: number;
-  /**
-   * Plan DID for nvm-transaction
-   */
-  planDid?: string;
-  /**
-   * Optional artifacts for media or extra data (images, audio, video, text, etc)
-   * @type {{ mimeType: string; parts: string[] }}
-   */
-  artifacts?: {
-    mimeType: string;
-    parts: string[];
-  };
-}
-
-interface ChatContextType {
-  messages: FullMessage[];
-  conversations: Conversation[];
-  currentConversationId: number | null;
-  showReasoningCollapse: boolean;
-  isStoredConversation: boolean;
-  sendMessage: (content: string) => void;
-  setCurrentConversationId: (id: number | null) => void;
-  startNewConversation: () => void;
-  onMessageTypingComplete: () => void;
-}
+import { FullMessage, ChatContextType } from "./chat-types";
+import { getCurrentBlockNumber, sendTaskToOrchestrator } from "./chat-api";
+import { subscribeToTaskEvents } from "./chat-sse";
+import { storedConversations, storedMessages } from "./chat-mocks";
+import { Conversation } from "@shared/schema";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -152,64 +96,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }, nextMessage.timedelta);
     }
   };
-
-  /**
-   * Get the current block number from the backend.
-   * @returns Promise resolving to the current block number.
-   */
-  async function getCurrentBlockNumber(): Promise<number> {
-    const response = await fetch("/api/latest-block", {
-      method: "GET",
-    });
-    if (!response.ok) throw new Error("Failed to get current block number");
-    const data = await response.json();
-    return data.blockNumber;
-  }
-
-  /**
-   * Send a message to the orchestrator via backend proxy and return the created task ID.
-   * @param content The user message to send.
-   * @returns Promise resolving to the task ID.
-   */
-  async function sendTaskToOrchestrator(content: string): Promise<{
-    task: { task_id: string };
-    planDid: string;
-  }> {
-    const response = await fetch("/api/orchestrator-task", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input_query: content }),
-    });
-    if (!response.ok) throw new Error("Failed to send message to orchestrator");
-    const data = await response.json();
-    return {
-      task: data.task,
-      planDid: data.planDid,
-    };
-  }
-
-  /**
-   * Subscribe to SSE events for a given task ID.
-   * @param taskId The task ID to subscribe to.
-   * @param onMessage Callback for each message event.
-   * @returns Function to close the SSE connection.
-   */
-  function subscribeToTaskEvents(
-    taskId: string,
-    onMessage: (data: any) => void
-  ): () => void {
-    const eventSource = new EventSource(
-      `http://localhost:3001/tasks/events/${taskId}`
-    );
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      onMessage(data);
-    };
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
-    return () => eventSource.close();
-  }
 
   const sendMessage = async (content: string) => {
     clearTimer();
@@ -549,6 +435,3 @@ export function useChat() {
   }
   return context;
 }
-
-const storedConversations: Conversation[] = []; // Replace with actual data
-const storedMessages: { [key: number]: FullMessage[] } = {}; // Replace with actual data
