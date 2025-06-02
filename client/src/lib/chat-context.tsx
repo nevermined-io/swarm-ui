@@ -158,6 +158,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     if (llmAction === "order_plan") {
       try {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            content:
+              "I'm ordering a payment plan. Transaction will be completed in a few seconds.",
+            type: "reasoning",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+          },
+        ]);
+
         const resp = await fetch("/api/order-plan", { method: "POST" });
         const data = await resp.json();
 
@@ -180,6 +193,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               content:
                 "You can now generate your music video! Write your prompt to continue.",
               type: "answer",
+              isUser: false,
+              conversationId: currentConversationId?.toString() || "new",
+              timestamp: new Date(),
+            },
+          ]);
+        } else if (data.error) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: prev.length + 1,
+              content: data.error || "Error ordering plan.",
+              type: "error",
               isUser: false,
               conversationId: currentConversationId?.toString() || "new",
               timestamp: new Date(),

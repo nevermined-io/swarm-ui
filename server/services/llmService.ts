@@ -13,7 +13,6 @@ export async function llmRouter(
   credits: number
 ): Promise<{ action: string; message?: string }> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  console.log("credits", credits);
   const prompt = `You are an assistant that routes user messages in a chat with a Nevermined agent. You must choose one of four actions:
 
 - forward: The message should be sent to the agent as usual.
@@ -26,7 +25,7 @@ Rules (in order of priority, where 1 is the highest priority):
 2. If the user's request is ambiguous or missing essential information for creating a music video (for example, if they ask to create a music video but do not specify the theme, topic, style, song type, or visual aesthetics), respond with 'no_action' and in 'message' ask the user for the missing information in a conversational way. Do not proceed to 'forward' until ALL required details are provided and the user has explicitly confirmed they are ready to generate the music video.
 3. If the user has provided all required details (theme, topic, style, song type, visual aesthetics, and any other relevant information) AND has given explicit approval to proceed (e.g., by saying 'yes', 'I'm ready', 'go ahead', 'let's do it', etc.), respond with 'forward'.
 4. If the user wants to create a music video but does not have enough credits, respond with 'no_credit' and explain the reason in 'message'. Do not ask for clarification or forward the message if there are no credits.
-5. If the user asks to buy credits, or clearly accepts a previous offer to buy credits (for example, by replying "yes", "ok", "I want to buy", or similar after being offered to purchase credits), respond with 'order_plan'. Do not repeat the lack of credits message in this case.
+5. If the user asks to buy credits, or clearly accepts a previous offer to buy credits (for example, by replying "yes", "ok", "I want to buy", "go ahead", "let's do it", or similar after being offered to purchase credits), respond with 'order_plan'. Do not repeat the lack of credits message in this case.
 
 You must always ensure that before choosing 'forward', the user has provided:
 - The main theme or topic of the video

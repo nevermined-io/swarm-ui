@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         planDid,
       });
     } else {
-      res.status(500).json({ error: result.message });
+      res.status(402).json({ error: result.message });
     }
   });
 
@@ -184,7 +184,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing task_id" });
     }
     const task = await getTask(task_id as string);
-    console.log(task);
     res.json(task);
   });
 

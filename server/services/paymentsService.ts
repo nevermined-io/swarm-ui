@@ -177,7 +177,7 @@ export async function getBurnTransactionInfo(
   }
   let burnEvent = null;
   let attempts = 0;
-  while (attempts < 4 && !burnEvent) {
+  while (attempts < 10 && !burnEvent) {
     burnEvent = await findBurnEvent(
       contractAddress,
       ourWallet,
@@ -186,7 +186,7 @@ export async function getBurnTransactionInfo(
     );
     if (!burnEvent) {
       attempts++;
-      if (attempts < 3) {
+      if (attempts < 10) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }
     }
