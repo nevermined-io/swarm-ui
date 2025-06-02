@@ -12,7 +12,7 @@ import { Conversation } from "@shared/schema";
  * @property {string} conversationId
  * @property {Date | null} timestamp
  * @property {boolean} isUser
- * @property {"reasoning" | "answer" | "transaction" | "nvm-transaction-user" | "nvm-transaction-agent" | "error" | "warning" | "callAgent"} type
+ * @property {"reasoning" | "answer" | "final-answer" | "transaction" | "nvm-transaction-user" | "nvm-transaction-agent" | "error" | "warning" | "callAgent"} type
  * @property {string} content
  * @property {string} [txHash]
  * @property {{ mimeType: string; parts: string[] }} [artifacts]
@@ -27,6 +27,7 @@ export interface FullMessage {
   type:
     | "reasoning"
     | "answer"
+    | "final-answer"
     | "transaction"
     | "nvm-transaction-user"
     | "nvm-transaction-agent"

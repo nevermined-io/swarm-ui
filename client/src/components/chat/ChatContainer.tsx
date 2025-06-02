@@ -44,6 +44,7 @@ export default function ChatContainer() {
         "nvm-transaction-user",
         "nvm-transaction-agent",
         "answer",
+        "final-answer",
         "error",
       ].includes(last.type)
     ) {

@@ -7,7 +7,12 @@ import {
   ReactNode,
 } from "react";
 import { FullMessage, ChatContextType } from "./chat-types";
-import { getCurrentBlockNumber, sendTaskToOrchestrator } from "./chat-api";
+import {
+  getCurrentBlockNumber,
+  sendTaskToOrchestrator,
+  getTask,
+  updateCreditsAndGetBurnTx,
+} from "./chat-api";
 import { subscribeToTaskEvents } from "./chat-sse";
 import { storedConversations, storedMessages } from "./chat-mocks";
 import { Conversation } from "@shared/schema";
@@ -282,7 +287,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     try {
       // Send the synthesized intent (or fallback) to the agent
       const blockNumber = await getCurrentBlockNumber();
-      const { task, planDid } = await sendTaskToOrchestrator(agentPrompt);
+      const { task } = await sendTaskToOrchestrator(agentPrompt);
 
       // Clean up previous SSE connection if any
       if (sseUnsubscribeRef.current) {
@@ -335,6 +340,32 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 ),
                 agentMessage,
               ];
+            }
+
+            // If the message is a final answer, return the message pero también lanza la actualización de créditos y burnTx en background
+            if (agentMessage.type === "final-answer") {
+              (async () => {
+                const burnTxData = await updateCreditsAndGetBurnTx(
+                  task.task_id
+                );
+                if (burnTxData) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: prev.length + 1,
+                      content: `Task completed. ${burnTxData.credits} credits have been deducted from your balance.`,
+                      type: "nvm-transaction-user",
+                      isUser: false,
+                      conversationId:
+                        currentConversationId?.toString() || "new",
+                      timestamp: new Date(),
+                      txHash: burnTxData.txHash,
+                      credits: burnTxData.credits,
+                      planDid: burnTxData.planDid,
+                    },
+                  ]);
+                }
+              })();
             }
             return [...prev, agentMessage];
           });

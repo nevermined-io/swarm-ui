@@ -81,7 +81,7 @@ export default function MessageGroup({
       className={cn(
         messages[0].isUser
           ? "ml-auto max-w-[80%]"
-          : messages[0].type === "answer"
+          : messages[0].type === "answer" || messages[0].type === "final-answer"
           ? "w-full"
           : "mr-auto max-w-[80%]",
         isFirstGroup && "mt-4"
@@ -131,7 +131,11 @@ export default function MessageGroup({
               const text = message.content;
               // Check for artifacts if type is 'answer'
               let mediaContent = null;
-              if (message.type === "answer" && (message as any).artifacts) {
+              if (
+                (message.type === "answer" ||
+                  message.type === "final-answer") &&
+                (message as any).artifacts
+              ) {
                 const artifacts = (message as any).artifacts;
                 const mediaType = getMediaTypeFromMime(artifacts.mimeType);
                 if (mediaType && Array.isArray(artifacts.parts)) {
@@ -242,11 +246,7 @@ export default function MessageGroup({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className={
-                      isUserTx
-                        ? "flex flex-col gap-2 relative bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium p-3"
-                        : "flex flex-col gap-2 relative bg-orange-200/30 text-orange-700 border border-orange-300/40 rounded-lg font-medium p-3"
-                    }
+                    className="flex flex-col gap-2 relative bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium p-3"
                   >
                     <div className="flex items-center justify-between w-full gap-2">
                       <span className="text-xs font-bold uppercase whitespace-nowrap">

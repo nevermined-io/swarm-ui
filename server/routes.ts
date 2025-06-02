@@ -6,6 +6,7 @@ import {
   createTask,
   orderPlanCredits,
   getBurnTransactionInfo,
+  getTask,
 } from "./services/paymentsService";
 import { llmIntentSynthesizer } from "./services/llmService";
 import { getCurrentBlockNumber } from "./services/blockchainService";
@@ -175,6 +176,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       res.status(500).json({ error: "Failed to search for burn transaction" });
     }
+  });
+
+  app.get("/api/task", async (req, res) => {
+    const { task_id } = req.query;
+    if (!task_id) {
+      return res.status(400).json({ error: "Missing task_id" });
+    }
+    const task = await getTask(task_id as string);
+    console.log(task);
+    res.json(task);
   });
 
   const httpServer = createServer(app);

@@ -177,7 +177,7 @@ export async function getBurnTransactionInfo(
   }
   let burnEvent = null;
   let attempts = 0;
-  while (attempts < 3 && !burnEvent) {
+  while (attempts < 4 && !burnEvent) {
     burnEvent = await findBurnEvent(
       contractAddress,
       ourWallet,
@@ -199,4 +199,21 @@ export async function getBurnTransactionInfo(
     };
   }
   return null;
+}
+
+export async function getTask(task_id: string): Promise<any> {
+  const nvmApiKey = process.env.NVM_API_KEY;
+  const environment = process.env.NVM_ENVIRONMENT || "testing";
+  const agentDid = process.env.AGENT_DID;
+  if (!nvmApiKey || !agentDid) {
+    throw new Error("Missing config");
+  }
+  const payments = initializePayments(nvmApiKey, environment);
+  const queryOpts = await payments.query.getServiceAccessConfig(agentDid);
+  const task = await payments.query.getTaskWithSteps(
+    agentDid,
+    task_id,
+    queryOpts
+  );
+  return task;
 }
