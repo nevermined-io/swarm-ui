@@ -4,6 +4,7 @@ import {
   hasSufficientERC20Balance,
   findMintEvent,
   getCurrentBlockNumber,
+  findBurnEvent,
 } from "./blockchainService";
 
 /**
@@ -149,4 +150,53 @@ export async function orderPlanCredits(planDid: string): Promise<{
     success: true,
     message: "Credits purchased and added to your balance.",
   };
+}
+
+/**
+ * Gets the burn transaction info for the current plan and wallet from a given block.
+ * @param {number} fromBlock - The block number to start searching from
+ * @returns {Promise<{ txHash: string, credits: string, planDid: string } | null>}
+ */
+export async function getBurnTransactionInfo(
+  fromBlock: number
+): Promise<{ txHash: string; credits: string; planDid: string } | null> {
+  const nvmApiKey = process.env.NVM_API_KEY;
+  const environment = process.env.NVM_ENVIRONMENT || "testing";
+  const planDid = process.env.PLAN_DID;
+  if (!nvmApiKey || !planDid) {
+    throw new Error("Missing config");
+  }
+  const payments = initializePayments(nvmApiKey, environment);
+  const planHelper = new PlanDDOHelper(payments, planDid);
+  await planHelper.loadDDO();
+  const contractAddress = await planHelper.get1155ContractAddress();
+  const tokenId = await planHelper.getTokenId();
+  const ourWallet = payments.accountAddress || "";
+  if (!contractAddress || !tokenId || !ourWallet) {
+    throw new Error("Missing contract, tokenId or wallet");
+  }
+  let burnEvent = null;
+  let attempts = 0;
+  while (attempts < 3 && !burnEvent) {
+    burnEvent = await findBurnEvent(
+      contractAddress,
+      ourWallet,
+      tokenId,
+      fromBlock
+    );
+    if (!burnEvent) {
+      attempts++;
+      if (attempts < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+    }
+  }
+  if (burnEvent) {
+    return {
+      txHash: burnEvent.txHash,
+      credits: burnEvent.value,
+      planDid: planDid,
+    };
+  }
+  return null;
 }

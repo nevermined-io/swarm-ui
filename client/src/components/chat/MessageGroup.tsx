@@ -150,7 +150,7 @@ export default function MessageGroup({
                   >
                     <div className="flex items-center justify-between w-full gap-2">
                       <span className="text-xs font-bold uppercase whitespace-nowrap">
-                        Transaction
+                        Blockchain Transaction
                       </span>
                       <a
                         href={explorerUrl}
@@ -219,7 +219,14 @@ export default function MessageGroup({
                   </motion.div>
                 );
               }
-              if (message.type === "nvm-transaction") {
+              if (
+                message.type === "nvm-transaction-user" ||
+                message.type === "nvm-transaction-agent"
+              ) {
+                /**
+                 * Render a Nevermined transaction message, differentiating between user-agent and agent-agent transactions.
+                 * @param {FullMessage} message
+                 */
                 const explorerUrl = `https://sepolia.arbiscan.io/tx/${message.txHash}`;
                 const credits = Number(message.credits);
                 const planDid = message.planDid
@@ -228,17 +235,24 @@ export default function MessageGroup({
                 const planUrl = planDid
                   ? `https://testing.nevermined.app/en/plan/${planDid}`
                   : null;
+                const isUserTx = message.type === "nvm-transaction-user";
                 return (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="flex flex-col gap-2 relative bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium p-3"
+                    className={
+                      isUserTx
+                        ? "flex flex-col gap-2 relative bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg font-medium p-3"
+                        : "flex flex-col gap-2 relative bg-orange-200/30 text-orange-700 border border-orange-300/40 rounded-lg font-medium p-3"
+                    }
                   >
                     <div className="flex items-center justify-between w-full gap-2">
                       <span className="text-xs font-bold uppercase whitespace-nowrap">
-                        NVM Transaction
+                        {isUserTx
+                          ? "NVM Transaction (User ↔ Agent)"
+                          : "NVM Transaction (Agent ↔ Agent)"}
                       </span>
                       <div className="flex items-center gap-2 ml-auto">
                         {credits > 0 && (
@@ -261,7 +275,11 @@ export default function MessageGroup({
                           href={explorerUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-green-200 whitespace-nowrap"
+                          className={
+                            isUserTx
+                              ? "text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-green-200 whitespace-nowrap"
+                              : "text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-mono flex items-center gap-1 hover:underline shadow-sm border border-orange-200 whitespace-nowrap"
+                          }
                           onClick={(e) => e.stopPropagation()}
                         >
                           {`${message.txHash?.slice(

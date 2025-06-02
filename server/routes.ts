@@ -5,8 +5,10 @@ import {
   getUserCredits,
   createTask,
   orderPlanCredits,
+  getBurnTransactionInfo,
 } from "./services/paymentsService";
 import { llmIntentSynthesizer } from "./services/llmService";
+import { getCurrentBlockNumber } from "./services/blockchainService";
 
 /**
  * POST /api/title/summarize
@@ -125,12 +127,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const task_id = await createTask(input_query);
-      return res.status(200).json({ task: { task_id } });
+      return res.status(200).json({
+        task: { task_id },
+        planDid: process.env.PLAN_DID,
+      });
     } catch (error) {
       console.error(error);
       return res
         .status(500)
         .json({ error: "Failed to create orchestrator task" });
+    }
+  });
+
+  /**
+   * GET /api/latest-block
+   * Returns the latest block number from the blockchain
+   * @returns {number} blockNumber - The latest block number
+   */
+  app.get("/api/latest-block", async (req, res) => {
+    try {
+      const blockNumber = await getCurrentBlockNumber();
+      res.json({ blockNumber });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch latest block" });
+    }
+  });
+
+  /**
+   * GET /api/find-burn-tx
+   * Finds the burn transaction for the current plan and wallet from a given block
+   * @query {number} fromBlock - The block number to start searching from
+   * @query {string} [taskId] - (Optional) The task identifier
+   * @returns {object} - { txHash, value, message }
+   */
+  app.get("/api/find-burn-tx", async (req, res) => {
+    const { fromBlock } = req.query;
+    if (!fromBlock) {
+      return res.status(400).json({ error: "Missing fromBlock parameter" });
+    }
+    try {
+      const result = await getBurnTransactionInfo(Number(fromBlock));
+      if (result && result.txHash) {
+        res.json(result);
+      } else {
+        res.status(404).json({ message: "No burn transaction found" });
+      }
+    } catch (err) {
+      res.status(500).json({ error: "Failed to search for burn transaction" });
     }
   });
 

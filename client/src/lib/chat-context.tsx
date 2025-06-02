@@ -15,7 +15,7 @@ import { Message, Conversation } from "@shared/schema";
  * @property {string} conversationId
  * @property {Date | null} timestamp
  * @property {boolean} isUser
- * @property {"reasoning" | "answer" | "transaction" | "nvm-transaction" | "error" | "warning" | "callAgent"} type
+ * @property {"reasoning" | "answer" | "transaction" | "nvm-transaction-user" | "nvm-transaction-agent" | "error" | "warning" | "callAgent"} type
  * @property {string} content
  * @property {string} [txHash]
  * @property {{ mimeType: string; parts: string[] }} [artifacts]
@@ -31,7 +31,8 @@ export interface FullMessage {
     | "reasoning"
     | "answer"
     | "transaction"
-    | "nvm-transaction"
+    | "nvm-transaction-user"
+    | "nvm-transaction-agent"
     | "error"
     | "warning"
     | "callAgent";
@@ -153,11 +154,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   /**
+   * Get the current block number from the backend.
+   * @returns Promise resolving to the current block number.
+   */
+  async function getCurrentBlockNumber(): Promise<number> {
+    const response = await fetch("/api/latest-block", {
+      method: "GET",
+    });
+    if (!response.ok) throw new Error("Failed to get current block number");
+    const data = await response.json();
+    return data.blockNumber;
+  }
+
+  /**
    * Send a message to the orchestrator via backend proxy and return the created task ID.
    * @param content The user message to send.
    * @returns Promise resolving to the task ID.
    */
-  async function sendTaskToOrchestrator(content: string): Promise<string> {
+  async function sendTaskToOrchestrator(content: string): Promise<{
+    task: { task_id: string };
+    planDid: string;
+  }> {
     const response = await fetch("/api/orchestrator-task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -165,7 +182,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
     if (!response.ok) throw new Error("Failed to send message to orchestrator");
     const data = await response.json();
-    return data.task.task_id;
+    return {
+      task: data.task,
+      planDid: data.planDid,
+    };
   }
 
   /**
@@ -256,7 +276,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             {
               id: prev.length + 1,
               content: data.message || "Plan ordered successfully.",
-              type: "nvm-transaction",
+              type: "nvm-transaction-user",
               isUser: false,
               conversationId: currentConversationId?.toString() || "new",
               timestamp: new Date(),
@@ -375,7 +395,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     try {
       // Send the synthesized intent (or fallback) to the agent
-      const taskId = await sendTaskToOrchestrator(agentPrompt);
+      const blockNumber = await getCurrentBlockNumber();
+      const { task, planDid } = await sendTaskToOrchestrator(agentPrompt);
 
       // Clean up previous SSE connection if any
       if (sseUnsubscribeRef.current) {
@@ -383,48 +404,82 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
 
       // Subscribe to SSE for this task
-      sseUnsubscribeRef.current = subscribeToTaskEvents(taskId, (data) => {
-        const agentMessage: FullMessage = {
-          id: messages.length + 1,
-          content: data.content,
-          type: data.type || "answer",
-          isUser: false,
-          conversationId: currentConversationId?.toString() || "new",
-          timestamp: new Date(),
-          txHash: data.txHash,
-          artifacts: data.artifacts,
-          credits: data.credits,
-          planDid: data.planDid,
-        };
-        setMessages((prev) => {
-          // Avoid duplicates by content, type and txHash
-          if (
-            prev.some(
-              (m) =>
-                m.content === agentMessage.content &&
-                m.type === agentMessage.type &&
-                m.txHash === agentMessage.txHash
-            )
-          ) {
-            return prev;
-          }
-          // If a final message with txHash arrives, remove the previous pending message with the same content and type
-          if (agentMessage.txHash) {
-            return [
-              ...prev.filter(
+      sseUnsubscribeRef.current = subscribeToTaskEvents(
+        task.task_id,
+        (data) => {
+          const agentMessage: FullMessage = {
+            id: messages.length + 1,
+            content: data.content,
+            type:
+              data.type === "nvm-transaction-agent"
+                ? "nvm-transaction-agent"
+                : data.type === "nvm-transaction-user"
+                ? "nvm-transaction-user"
+                : data.type || "answer",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+            txHash: data.txHash,
+            artifacts: data.artifacts,
+            credits: data.credits,
+            planDid: data.planDid,
+          };
+          setMessages((prev) => {
+            // Avoid duplicates by content, type and txHash
+            if (
+              prev.some(
                 (m) =>
-                  !(
-                    m.content === agentMessage.content &&
-                    m.type === agentMessage.type &&
-                    !m.txHash
-                  )
-              ),
-              agentMessage,
-            ];
-          }
-          return [...prev, agentMessage];
-        });
-      });
+                  m.content === agentMessage.content &&
+                  m.type === agentMessage.type &&
+                  m.txHash === agentMessage.txHash
+              )
+            ) {
+              return prev;
+            }
+            // If a final message with txHash arrives, remove the previous pending message with the same content and type
+            if (agentMessage.txHash) {
+              return [
+                ...prev.filter(
+                  (m) =>
+                    !(
+                      m.content === agentMessage.content &&
+                      m.type === agentMessage.type &&
+                      !m.txHash
+                    )
+                ),
+                agentMessage,
+              ];
+            }
+            return [...prev, agentMessage];
+          });
+        }
+      );
+
+      // Find the burn transaction for the current plan and wallet from a given block. Send fromBlock as query parameter.
+      const burnTxResp = await fetch(
+        "/api/find-burn-tx?fromBlock=" + blockNumber,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      if (burnTxResp.ok) {
+        const burnTxData = await burnTxResp.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            content: `I have sent the task to the agent. It will take a few minutes to complete. ${burnTxData.credits} credits have been deducted from your balance.`,
+            type: "nvm-transaction-user",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+            txHash: burnTxData.txHash,
+            credits: burnTxData.credits,
+            planDid: burnTxData.planDid,
+          },
+        ]);
+      }
     } catch (error) {
       console.error(error);
     }

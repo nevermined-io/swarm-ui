@@ -41,7 +41,14 @@ export default function ChatContainer() {
   useEffect(() => {
     if (!messages.length) return;
     const last = messages[messages.length - 1];
-    if (["nvm-transaction", "answer", "error"].includes(last.type)) {
+    if (
+      [
+        "nvm-transaction-user",
+        "nvm-transaction-agent",
+        "answer",
+        "error",
+      ].includes(last.type)
+    ) {
       refreshCredits();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
