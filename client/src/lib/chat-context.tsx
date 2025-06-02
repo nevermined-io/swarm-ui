@@ -21,6 +21,9 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<FullMessage[]>([]);
+  const [messagesByConversationId, setMessagesByConversationId] = useState<{
+    [id: number]: FullMessage[];
+  }>({});
   const [conversations, setConversations] = useState<Conversation[]>(
     [...storedConversations].sort(
       (a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0)
@@ -102,6 +105,58 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Carga los mensajes de una conversación existente y cambia el currentConversationId.
+   * @param {number | null} id - ID de la conversación o null para limpiar.
+   */
+  const handleSetCurrentConversationId = (id: number | null) => {
+    clearTimer();
+    setCurrentConversationId(id);
+    // Clean up SSE connection when changing conversation (TODO: remove this)
+    if (sseUnsubscribeRef.current) {
+      sseUnsubscribeRef.current();
+      sseUnsubscribeRef.current = null;
+    }
+    if (id !== null) {
+      setMessages(messagesByConversationId[id] || []);
+      setShowReasoningCollapse(false);
+      setIsStoredConversation(false);
+    } else {
+      setMessages([]);
+      setShowReasoningCollapse(false);
+      setIsStoredConversation(false);
+    }
+  };
+
+  /**
+   * Crea una nueva conversación, la selecciona y limpia el chat.
+   */
+  const startNewConversation = () => {
+    const newId =
+      conversations.length > 0
+        ? Math.max(...conversations.map((c) => c.id)) + 1
+        : 1;
+    const newConversation: Conversation = {
+      id: newId,
+      title: "New conversation",
+      timestamp: new Date(),
+    };
+    setConversations((prev) => [newConversation, ...prev]);
+    setMessagesByConversationId((prev) => ({ ...prev, [newId]: [] }));
+    setCurrentConversationId(newId);
+    setMessages([]);
+    setShowReasoningCollapse(false);
+    setIsStoredConversation(false);
+    // Clean up SSE connection
+    if (sseUnsubscribeRef.current) {
+      sseUnsubscribeRef.current();
+      sseUnsubscribeRef.current = null;
+    }
+  };
+
+  /**
+   * Al enviar un mensaje, lo añade a la conversación actual y actualiza el historial en memoria.
+   */
   const sendMessage = async (content: string) => {
     clearTimer();
     setIsStoredConversation(false);
@@ -115,7 +170,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       conversationId: currentConversationId?.toString() || "new",
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => {
+      const updated = [...prev, userMessage];
+      if (currentConversationId) {
+        setMessagesByConversationId((prevMap) => ({
+          ...prevMap,
+          [currentConversationId]: updated,
+        }));
+      }
+      return updated;
+    });
     setShowReasoningCollapse(false);
 
     // Call the LLM router before sending to the agent
@@ -433,23 +497,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setShowReasoningCollapse(false);
       setIsStoredConversation(true);
     }
-  };
-
-  const handleSetCurrentConversationId = (id: number | null) => {
-    clearTimer();
-    setCurrentConversationId(id);
-    // Clean up SSE connection when changing conversation (TODO: remove this)
-    if (sseUnsubscribeRef.current) {
-      sseUnsubscribeRef.current();
-      sseUnsubscribeRef.current = null;
-    }
-    if (id !== null) {
-      loadStoredMessages(id);
-    }
-  };
-
-  const startNewConversation = () => {
-    handleSetCurrentConversationId(null);
   };
 
   useEffect(() => {
