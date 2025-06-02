@@ -1,6 +1,7 @@
 /**
  * Custom hook to fetch and cache user credits.
  * Only updates state if the value changes.
+ * Adds the API Key from localStorage as Authorization header.
  * @returns { [number | null, () => void] } [credits, refreshCredits]
  */
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -11,7 +12,11 @@ export function useUserCredits() {
 
   const fetchCredits = useCallback(async () => {
     try {
-      const resp = await fetch("/api/credit");
+      const apiKey = localStorage.getItem("nvmApiKey");
+      const resp = await fetch("/api/credit", {
+        headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+      });
+      if (!resp.ok) throw new Error("Unauthorized or error fetching credits");
       const data = await resp.json();
       if (
         typeof data.credit === "number" &&
@@ -21,7 +26,7 @@ export function useUserCredits() {
         lastCredits.current = data.credit;
       }
     } catch (e) {
-      // Optionally handle error
+      setCredits(null);
     }
   }, []);
 

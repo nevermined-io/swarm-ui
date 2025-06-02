@@ -34,8 +34,7 @@ export function initializePayments(
  * @param {string} planDid - The plan DID
  * @returns {Promise<number>} - The available credits
  */
-export async function getUserCredits(): Promise<number> {
-  const nvmApiKey = process.env.NVM_API_KEY;
+export async function getUserCredits(nvmApiKey: string): Promise<number> {
   const environment = process.env.NVM_ENVIRONMENT || "testing";
   const planDid = process.env.PLAN_DID;
   if (!nvmApiKey || !planDid) {
@@ -48,13 +47,15 @@ export async function getUserCredits(): Promise<number> {
 }
 
 /**
- * Crea una tarea en el orchestrator usando la librería payments y devuelve el task_id.
- * @param {string} input_query - El mensaje del usuario
- * @param {string} agentDid - El DID del agente
- * @returns {Promise<string>} - El task_id creado
+ * Create a task in the orchestrator using the payments library and return the task_id.
+ * @param {string} input_query - The user's message
+ * @param {string} nvmApiKey - Nevermined API key
+ * @returns {Promise<string>} - The created task_id
  */
-export async function createTask(input_query: string): Promise<string> {
-  const nvmApiKey = process.env.NVM_API_KEY;
+export async function createTask(
+  input_query: string,
+  nvmApiKey: string
+): Promise<string> {
   const environment = process.env.NVM_ENVIRONMENT || "testing";
   const planDid = process.env.PLAN_DID;
   const agentDid = process.env.AGENT_DID;
@@ -78,17 +79,19 @@ export async function createTask(input_query: string): Promise<string> {
 
 /**
  * Orders credits for a plan, checks balance, and returns the mint transaction.
- * @param {any} payments - Payments instance
  * @param {string} planDid - Plan DID
+ * @param {string} nvmApiKey - Nevermined API key
  * @returns {Promise<{ success: boolean, txHash?: string, credits?: string, message: string }>}
  */
-export async function orderPlanCredits(planDid: string): Promise<{
+export async function orderPlanCredits(
+  planDid: string,
+  nvmApiKey: string
+): Promise<{
   success: boolean;
   txHash?: string;
   credits?: string;
   message: string;
 }> {
-  const nvmApiKey = process.env.NVM_API_KEY;
   const environment = process.env.NVM_ENVIRONMENT;
   if (!nvmApiKey || !environment) {
     throw new Error("Missing Nevermined API key or environment");
@@ -155,12 +158,13 @@ export async function orderPlanCredits(planDid: string): Promise<{
 /**
  * Gets the burn transaction info for the current plan and wallet from a given block.
  * @param {number} fromBlock - The block number to start searching from
+ * @param {string} nvmApiKey - Nevermined API key
  * @returns {Promise<{ txHash: string, credits: string, planDid: string } | null>}
  */
 export async function getBurnTransactionInfo(
-  fromBlock: number
+  fromBlock: number,
+  nvmApiKey: string
 ): Promise<{ txHash: string; credits: string; planDid: string } | null> {
-  const nvmApiKey = process.env.NVM_API_KEY;
   const environment = process.env.NVM_ENVIRONMENT || "testing";
   const planDid = process.env.PLAN_DID;
   if (!nvmApiKey || !planDid) {
@@ -201,8 +205,16 @@ export async function getBurnTransactionInfo(
   return null;
 }
 
-export async function getTask(task_id: string): Promise<any> {
-  const nvmApiKey = process.env.NVM_API_KEY;
+/**
+ * Get the details of a task by its task_id.
+ * @param {string} task_id - Task ID
+ * @param {string} nvmApiKey - Nevermined API key
+ * @returns {Promise<any>} - Task details
+ */
+export async function getTask(
+  task_id: string,
+  nvmApiKey: string
+): Promise<any> {
   const environment = process.env.NVM_ENVIRONMENT || "testing";
   const agentDid = process.env.AGENT_DID;
   if (!nvmApiKey || !agentDid) {

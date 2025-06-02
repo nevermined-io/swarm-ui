@@ -26,6 +26,15 @@ import Footer from "./Footer";
 import Logo from "./Logo";
 import { Badge } from "@/components/ui/badge";
 import { useUserCredits } from "@/lib/useUserCredits";
+import SettingsModal from "@/components/ui/settings-modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function ChatContainer() {
   const { messages, conversations } = useChat();
@@ -34,8 +43,13 @@ export default function ChatContainer() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [credits, refreshCredits] = useUserCredits();
   const loading = credits === null;
+  const initialApiKey =
+    typeof window !== "undefined" ? !!localStorage.getItem("nvmApiKey") : false;
+  const [hasApiKey, setHasApiKey] = useState(initialApiKey);
+  const [settingsOpen, setSettingsOpen] = useState(!initialApiKey);
+  const [helpOpen, setHelpOpen] = useState(false);
 
-  // Recarga créditos cuando hay una transacción relevante
+  // Refresh credits when a relevant transaction is completed
   useEffect(() => {
     if (!messages.length) return;
     const last = messages[messages.length - 1];
@@ -52,6 +66,22 @@ export default function ChatContainer() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
+
+  // Check API Key on mount and on storage change
+  useEffect(() => {
+    const checkApiKey = () => {
+      const key = localStorage.getItem("nvmApiKey");
+      setHasApiKey(!!key);
+    };
+    checkApiKey();
+    window.addEventListener("storage", checkApiKey);
+    return () => window.removeEventListener("storage", checkApiKey);
+  }, []);
+
+  // Show settings modal if no API Key
+  useEffect(() => {
+    if (!hasApiKey) setSettingsOpen(true);
+  }, [hasApiKey]);
 
   const handleFinishTyping = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,8 +111,69 @@ export default function ChatContainer() {
     return groups;
   }, []);
 
+  /**
+   * Logs out the user by removing the API Key from localStorage and showing the settings modal.
+   */
+  const handleLogout = () => {
+    localStorage.removeItem("nvmApiKey");
+    setHasApiKey(false);
+    setSettingsOpen(true);
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>About this Chat UI</DialogTitle>
+            <DialogDescription>
+              Welcome to the Nevermined AI music video generator.
+              <br />
+              <br />
+              <b>What can you do here?</b>
+              <br />
+              This chat allows you to interact with a swarm of intelligent
+              agents that can create music videos from your ideas and
+              descriptions. Just describe the video you want, and the AI will
+              take care of the rest.
+              <br />
+              <br />
+              <b>How does the API Key work?</b>
+              <br />
+              To use the system, you need a Nevermined API Key. You can
+              configure it from the user menu (Settings/Login). The API Key is
+              stored only in your browser and is used to authenticate all
+              requests.
+              <br />
+              <br />
+              <b>What are credits?</b>
+              <br />
+              Each action (such as generating a music video) consumes credits
+              from your Nevermined account. You can see your current credits at
+              the top. If you run out of credits, you can purchase more directly
+              from the chat.
+              <br />
+              <br />
+              <b>Privacy</b>
+              <br />
+              Your API Key is never sent to third parties; it is only used to
+              authenticate you with Nevermined.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setHelpOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => {
+          setSettingsOpen(false);
+          const key = localStorage.getItem("nvmApiKey");
+          setHasApiKey(!!key);
+        }}
+        onApiKeySaved={refreshCredits}
+      />
       {/* Sidebar */}
       <div
         className={cn(
@@ -91,7 +182,7 @@ export default function ChatContainer() {
           "fixed md:relative z-40"
         )}
       >
-        {sidebarOpen && (
+        {sidebarOpen && hasApiKey && (
           <div className="h-full relative">
             <Sidebar conversations={conversations} />
             <Separator
@@ -146,7 +237,7 @@ export default function ChatContainer() {
                   : "min-w-[60px] justify-center text-green-600"
               }
             >
-              {loading ? "..." : `${credits} credits`}
+              {hasApiKey ? (loading ? "..." : `${credits} credits`) : "-"}
             </Badge>
             {!sidebarOpen && <Logo />}
             <DropdownMenu>
@@ -158,26 +249,47 @@ export default function ChatContainer() {
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => setHelpOpen(true)}
+                >
                   <HelpCircle className="mr-2 h-4 w-4" />
                   Help
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
+                {hasApiKey && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => setSettingsOpen(true)}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
+                {hasApiKey ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    className="cursor-pointer text-primary focus:text-primary"
+                    onClick={() => setSettingsOpen(true)}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Login
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
         <div className="flex-1 overflow-hidden relative">
-          {!isEmpty && (
+          {hasApiKey && !isEmpty && (
             <div className="h-full">
               <div className="h-full px-4 overflow-y-auto">
                 <div className="space-y-4 pb-12">
@@ -196,7 +308,7 @@ export default function ChatContainer() {
           )}
         </div>
 
-        <ChatInput />
+        <ChatInput disabled={!hasApiKey} />
       </div>
 
       {/* Footer */}

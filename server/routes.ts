@@ -36,11 +36,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * GET /api/credit
    * Returns the credit available for the user
+   * Requires Authorization header with Bearer token
    * @returns {number} credit - The credit available
    */
   app.get("/api/credit", async (req, res) => {
     try {
-      const credit = await getUserCredits();
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res
+          .status(401)
+          .json({ error: "Missing or invalid Authorization header" });
+      }
+      const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+      if (!nvmApiKey) {
+        return res.status(401).json({ error: "Missing API Key" });
+      }
+      const credit = await getUserCredits(nvmApiKey);
       res.json({ credit });
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch credit" });
@@ -60,7 +71,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Missing message" });
     }
     try {
-      const credits = await getUserCredits();
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res
+          .status(401)
+          .json({ error: "Missing or invalid Authorization header" });
+      }
+      const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+      if (!nvmApiKey) {
+        return res.status(401).json({ error: "Missing API Key" });
+      }
+      const credits = await getUserCredits(nvmApiKey);
       const result = await llmRouter(message, history, credits);
       return res.json(result);
     } catch (err) {
@@ -73,6 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * POST /api/order-plan
    * Simulates the purchase of a Nevermined plan and returns a success message.
+   * Requires Authorization header with Bearer token
    * @returns {string} message - Confirmation message
    */
   app.post("/api/order-plan", async (req, res) => {
@@ -80,7 +102,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planDid) {
       return res.status(500).json({ error: "Missing plan DID" });
     }
-    const result = await orderPlanCredits(planDid);
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+    }
+    const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+    if (!nvmApiKey) {
+      return res.status(401).json({ error: "Missing API Key" });
+    }
+    const result = await orderPlanCredits(planDid, nvmApiKey);
     if (result.success) {
       res.json({
         message:
@@ -98,6 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * POST /api/intent/synthesize
    * Synthesizes the user's intent from the conversation history using OpenAI
+   * Requires Authorization header with Bearer token
    * @body {Array<{role: string, content: string}>} history - The conversation history
    * @returns {string} intent - The synthesized intent
    */
@@ -117,6 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * POST /api/orchestrator-task
    * Creates an orchestrator task using the payments library and returns the task_id.
+   * Requires Authorization header with Bearer token
    * @body {string} input_query - The user's message
    * @returns {object} - { task: { task_id: string } }
    */
@@ -125,9 +159,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (typeof input_query !== "string") {
       return res.status(400).json({ error: "Missing input_query" });
     }
-
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+    }
+    const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+    if (!nvmApiKey) {
+      return res.status(401).json({ error: "Missing API Key" });
+    }
     try {
-      const task_id = await createTask(input_query);
+      const task_id = await createTask(input_query, nvmApiKey);
       return res.status(200).json({
         task: { task_id },
         planDid: process.env.PLAN_DID,
@@ -157,6 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /**
    * GET /api/find-burn-tx
    * Finds the burn transaction for the current plan and wallet from a given block
+   * Requires Authorization header with Bearer token
    * @query {number} fromBlock - The block number to start searching from
    * @query {string} [taskId] - (Optional) The task identifier
    * @returns {object} - { txHash, value, message }
@@ -166,8 +210,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!fromBlock) {
       return res.status(400).json({ error: "Missing fromBlock parameter" });
     }
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+    }
+    const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+    if (!nvmApiKey) {
+      return res.status(401).json({ error: "Missing API Key" });
+    }
     try {
-      const result = await getBurnTransactionInfo(Number(fromBlock));
+      const result = await getBurnTransactionInfo(Number(fromBlock), nvmApiKey);
       if (result && result.txHash) {
         res.json(result);
       } else {
@@ -178,12 +232,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * GET /api/task
+   * Returns the task details for a given task_id
+   * Requires Authorization header with Bearer token
+   */
   app.get("/api/task", async (req, res) => {
     const { task_id } = req.query;
     if (!task_id) {
       return res.status(400).json({ error: "Missing task_id" });
     }
-    const task = await getTask(task_id as string);
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+    }
+    const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+    if (!nvmApiKey) {
+      return res.status(401).json({ error: "Missing API Key" });
+    }
+    const task = await getTask(task_id as string, nvmApiKey);
     res.json(task);
   });
 

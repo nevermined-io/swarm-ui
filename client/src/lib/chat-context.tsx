@@ -10,8 +10,8 @@ import { FullMessage, ChatContextType } from "./chat-types";
 import {
   getCurrentBlockNumber,
   sendTaskToOrchestrator,
-  getTask,
   updateCreditsAndGetBurnTx,
+  getBurnTransaction,
 } from "./chat-api";
 import { subscribeToTaskEvents } from "./chat-sse";
 import { storedConversations, storedMessages } from "./chat-mocks";
@@ -123,9 +123,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       "forward";
     let llmReason = "";
     try {
+      const apiKey = localStorage.getItem("nvmApiKey");
       const resp = await fetch("/api/llm-router", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+        },
         body: JSON.stringify({
           message: content,
           history: messages,
@@ -398,13 +402,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       );
 
       // Find the burn transaction for the current plan and wallet from a given block. Send fromBlock as query parameter.
-      const burnTxResp = await fetch(
-        "/api/find-burn-tx?fromBlock=" + blockNumber,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const burnTxResp = await getBurnTransaction(blockNumber);
       if (burnTxResp.ok) {
         const burnTxData = await burnTxResp.json();
         setMessages((prev) => [
@@ -483,7 +481,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     </ChatContext.Provider>
   );
 }
-
 export function useChat() {
   const context = useContext(ChatContext);
   if (!context) {
