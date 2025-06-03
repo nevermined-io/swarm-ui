@@ -89,3 +89,16 @@ export async function updateCreditsAndGetBurnTx(
   if (!burnTxResp) return null;
   return burnTxResp;
 }
+
+export async function orderPlanCredits(): Promise<any | null> {
+  const apiKey = localStorage.getItem("nvmApiKey");
+  const response = await fetch("/api/order-plan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+    },
+  });
+  if (!response.ok) return null;
+  return await response.json();
+}

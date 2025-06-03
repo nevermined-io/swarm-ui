@@ -12,6 +12,7 @@ import {
   sendTaskToOrchestrator,
   updateCreditsAndGetBurnTx,
   getBurnTransaction,
+  orderPlanCredits,
 } from "./chat-api";
 import { subscribeToTaskEvents } from "./chat-sse";
 import { storedConversations, storedMessages } from "./chat-mocks";
@@ -111,6 +112,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
    */
   const handleSetCurrentConversationId = (id: number | null) => {
     clearTimer();
+    // Save current messages to messagesByConversationId before switching
+    if (currentConversationId !== null) {
+      setMessagesByConversationId((prev) => ({
+        ...prev,
+        [currentConversationId]: messages,
+      }));
+    }
     setCurrentConversationId(id);
     // Clean up SSE connection when changing conversation (TODO: remove this)
     if (sseUnsubscribeRef.current) {
@@ -118,9 +126,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       sseUnsubscribeRef.current = null;
     }
     if (id !== null) {
-      setMessages(messagesByConversationId[id] || []);
-      setShowReasoningCollapse(false);
-      setIsStoredConversation(false);
+      if (
+        messagesByConversationId[id] &&
+        messagesByConversationId[id].length > 0
+      ) {
+        setMessages(messagesByConversationId[id]);
+        setShowReasoningCollapse(false);
+        setIsStoredConversation(false);
+      } else {
+        loadStoredMessages(id);
+      }
     } else {
       setMessages([]);
       setShowReasoningCollapse(false);
@@ -239,8 +254,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           },
         ]);
 
-        const resp = await fetch("/api/order-plan", { method: "POST" });
-        const data = await resp.json();
+        const data = await orderPlanCredits();
 
         if (data.txHash) {
           setMessages((prev) => [
