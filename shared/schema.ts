@@ -22,7 +22,24 @@ export const conversations = pgTable("conversations", {
 export const messageSchema = createInsertSchema(messages);
 export const conversationSchema = createInsertSchema(conversations);
 
+/**
+ * Representa una conversación en el sistema.
+ * @typedef {Object} Conversation
+ * @property {number} id - Conversation unique identifier
+ * @property {string} title - Conversation title
+ * @property {Date} timestamp - Creation date
+ * @property {string} [taskId] - Associated task id for agent communication (opcional)
+ */
+export type Conversation = {
+  id: number;
+  title: string;
+  timestamp: Date;
+  /**
+   * Associated task id for agent communication (opcional)
+   */
+  taskId?: string;
+};
+
 export type Message = typeof messages.$inferSelect;
-export type Conversation = typeof conversations.$inferSelect;
 export type InsertMessage = z.infer<typeof messageSchema>;
 export type InsertConversation = z.infer<typeof conversationSchema>;

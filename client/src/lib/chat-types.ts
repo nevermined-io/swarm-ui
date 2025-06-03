@@ -55,6 +55,15 @@ export interface FullMessage {
 }
 
 /**
+ * Conversation for chat context, with optional taskId for agent association.
+ * @typedef {Object} Conversation
+ * @property {number} id
+ * @property {string} title
+ * @property {Date} timestamp
+ * @property {string} [taskId] - Associated task id for agent communication (optional)
+ */
+
+/**
  * Interfaz para el contexto de chat de React.
  * @typedef {Object} ChatContextType
  */

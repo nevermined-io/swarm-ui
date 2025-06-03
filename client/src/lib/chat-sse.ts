@@ -5,17 +5,21 @@
 
 /**
  * Subscribe to SSE events for a given task ID.
- * @param taskId The task ID to subscribe to.
- * @param onMessage Callback for each message event.
- * @returns Function to close the SSE connection.
+ * @param {string} taskId - The task ID to subscribe to.
+ * @param {(data: any) => void} onMessage - Callback for each message event.
+ * @returns {() => void} Function to close the SSE connection.
  */
 export function subscribeToTaskEvents(
   taskId: string,
   onMessage: (data: any) => void
 ): () => void {
-  const eventSource = new EventSource(
-    `http://localhost:3001/tasks/events/${taskId}`
-  );
+  const baseUrl = import.meta.env.VITE_SSE_URL;
+  if (!baseUrl) {
+    throw new Error(
+      "Missing environment variable: VITE_SSE_URL. Please define it in your .env file."
+    );
+  }
+  const eventSource = new EventSource(`${baseUrl}/tasks/events/${taskId}`);
   eventSource.onmessage = (event) => {
     const data = JSON.parse(event.data);
     onMessage(data);
