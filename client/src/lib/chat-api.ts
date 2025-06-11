@@ -80,6 +80,11 @@ export async function getBurnTransaction(
   return await burnTxResp.json();
 }
 
+/**
+ * Updates the credits and gets the burn transaction for a given task ID.
+ * @param taskId The task ID to update the credits for.
+ * @returns Promise resolving to burn transaction data (or null if not found).
+ */
 export async function updateCreditsAndGetBurnTx(
   taskId: string
 ): Promise<any | null> {
@@ -88,17 +93,4 @@ export async function updateCreditsAndGetBurnTx(
   const burnTxResp = await getBurnTransaction(blockNumber);
   if (!burnTxResp) return null;
   return burnTxResp;
-}
-
-export async function orderPlanCredits(): Promise<any | null> {
-  const apiKey = localStorage.getItem("nvmApiKey");
-  const response = await fetch("/api/order-plan", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-    },
-  });
-  if (!response.ok) return null;
-  return await response.json();
 }

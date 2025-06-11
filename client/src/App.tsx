@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Chat from "@/pages/chat";
 import { ChatProvider } from "@/lib/chat-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { UserStateProvider } from "@/lib/user-state-context";
 
 function Router() {
   return (
@@ -16,17 +17,17 @@ function Router() {
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <UserStateProvider>
         <ChatProvider>
-          <Router />
-          <Toaster />
+          <ThemeProvider>
+            <Router />
+            <Toaster />
+          </ThemeProvider>
         </ChatProvider>
-      </ThemeProvider>
+      </UserStateProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;

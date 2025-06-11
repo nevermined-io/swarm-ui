@@ -12,7 +12,7 @@ import { Conversation } from "@shared/schema";
  * @property {string} conversationId
  * @property {Date | null} timestamp
  * @property {boolean} isUser
- * @property {"reasoning" | "answer" | "final-answer" | "transaction" | "nvm-transaction-user" | "nvm-transaction-agent" | "error" | "warning" | "callAgent"} type
+ * @property {"reasoning" | "answer" | "final-answer" | "transaction" | "nvm-transaction-user" | "nvm-transaction-agent" | "error" | "warning" | "callAgent" | "usd-info"} type
  * @property {string} content
  * @property {string} [txHash]
  * @property {{ mimeType: string; parts: string[] }} [artifacts]
@@ -33,7 +33,8 @@ export interface FullMessage {
     | "nvm-transaction-agent"
     | "error"
     | "warning"
-    | "callAgent";
+    | "callAgent"
+    | "usd-info";
   content: string;
   txHash?: string;
   /**
@@ -53,15 +54,6 @@ export interface FullMessage {
     parts: string[];
   };
 }
-
-/**
- * Conversation for chat context, with optional taskId for agent association.
- * @typedef {Object} Conversation
- * @property {number} id
- * @property {string} title
- * @property {Date} timestamp
- * @property {string} [taskId] - Associated task id for agent communication (optional)
- */
 
 /**
  * Interfaz para el contexto de chat de React.

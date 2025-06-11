@@ -50,6 +50,15 @@ export class PlanDDOHelper {
   }
 
   /**
+   * Gets the number of credits for the plan
+   * @returns {Promise<number>} The number of credits
+   */
+  async getPlanCredits(): Promise<number> {
+    const ddo = await this.loadDDO();
+    return ddo?.service?.[2]?.attributes?.main?.nftAttributes?.amount || 0;
+  }
+
+  /**
    * Gets the agent wallet from the DDO
    * @returns {Promise<string | undefined>} The agent wallet address
    */

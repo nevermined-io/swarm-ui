@@ -82,3 +82,8 @@
   background: rgb(0, 0, 56);
   color: white;
 }
+
+.shadow-gold {
+  box-shadow: 0 2px 16px 0 rgba(212, 175, 55, 0.25), 0 1.5px 8px 0 rgba(212, 175, 55, 0.15);
+  border: 1.5px solid #e6c200;
+}

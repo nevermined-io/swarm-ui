@@ -229,3 +229,69 @@ export async function getTask(
   );
   return task;
 }
+
+/**
+ * Gets the plan price (in USDC units) and number of credits for a plan.
+ * @param {string} nvmApiKey - Nevermined API key
+ * @returns {Promise<{ planPrice: string, planCredits: number }>}
+ */
+export async function getPlanCost(nvmApiKey: string): Promise<{
+  planPrice: string;
+  planCredits: number;
+}> {
+  const environment = process.env.NVM_ENVIRONMENT || "testing";
+  const planDid = process.env.PLAN_DID;
+  if (!nvmApiKey || !planDid) {
+    throw new Error("Missing config");
+  }
+  const payments = initializePayments(nvmApiKey, environment);
+  const planHelper = new PlanDDOHelper(payments, planDid);
+  await planHelper.loadDDO();
+  const planPrice = await planHelper.getPlanPrice();
+  const planCredits = await planHelper.getPlanCredits();
+  return { planPrice, planCredits };
+}
+
+/**
+ * Burns a given amount of credits for the current plan and wallet.
+ * @param {string} planDid - Plan DID
+ * @param {string} creditsAmount - Amount of credits to burn (as string)
+ * @param {string} nvmApiKey - Nevermined API key
+ * @returns {Promise<{ success: boolean, txHash?: string, message: string }>}
+ */
+export async function burnCredits(
+  planDid: string,
+  creditsAmount: string,
+  nvmApiKey: string
+): Promise<{
+  success: boolean;
+  txHash?: string;
+  message: string;
+}> {
+  const environment = process.env.NVM_ENVIRONMENT || "testing";
+  if (!nvmApiKey || !planDid) {
+    throw new Error("Missing Nevermined API key or plan DID");
+  }
+  const payments = initializePayments(nvmApiKey, environment);
+
+  try {
+    const result = await payments.burnCredits(planDid, creditsAmount);
+    if (result && result.success) {
+      return {
+        success: true,
+        txHash: result.txHash,
+        message: result.message || "Credits burned successfully.",
+      };
+    } else {
+      return {
+        success: false,
+        message: result?.message || "Failed to burn credits.",
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.message || "Error burning credits.",
+    };
+  }
+}

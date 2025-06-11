@@ -38,6 +38,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
         <>
           <div className="p-4 border-b border-sidebar-border/50 flex justify-between items-center">
             <h2 className="font-semibold text-sm">Conversations</h2>
+            {/*
             <Button
               variant="ghost"
               size="icon"
@@ -46,6 +47,7 @@ export default function Sidebar({ conversations }: SidebarProps) {
             >
               <Plus className="h-4 w-4" />
             </Button>
+            */}
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">

@@ -7,6 +7,8 @@ import {
   orderPlanCredits,
   getBurnTransactionInfo,
   getTask,
+  getPlanCost,
+  burnCredits,
 } from "./services/paymentsService";
 import { llmIntentSynthesizer } from "./services/llmService";
 import { getCurrentBlockNumber } from "./services/blockchainService";
@@ -254,6 +256,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     const task = await getTask(task_id as string, nvmApiKey);
     res.json(task);
+  });
+
+  /**
+   * GET /api/plan/cost
+   * Calculates the cost in USDC for a given number of credits of a plan.
+   * Requires Authorization header with Bearer token
+   * @query {string} planDid - The plan DID
+   * @query {number} credits - The number of credits consumed
+   * @returns {object} - { cost: string, planPrice: string, planCredits: number, credits: number }
+   */
+  app.get("/api/plan/cost", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+    }
+    const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+    if (!nvmApiKey) {
+      return res.status(401).json({ error: "Missing API Key" });
+    }
+    try {
+      const result = await getPlanCost(nvmApiKey);
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to get plan price and credits" });
+    }
+  });
+
+  /**
+   * POST /api/burn-credits
+   * Quema una cantidad de créditos del plan Nevermined del usuario
+   * Requires Authorization header with Bearer token
+   * @body {number} credits - Cantidad de créditos a quemar
+   * @returns {object} - { success: boolean, txHash?: string, message: string }
+   */
+  app.post("/api/burn-credits", async (req, res) => {
+    const { credits } = req.body;
+    if (!credits || isNaN(Number(credits)) || Number(credits) <= 0) {
+      return res
+        .status(400)
+        .json({ error: "Missing or invalid credits amount" });
+    }
+    const planDid = process.env.PLAN_DID;
+    if (!planDid) {
+      return res.status(500).json({ error: "Missing plan DID" });
+    }
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or invalid Authorization header" });
+    }
+    const nvmApiKey = authHeader.replace("Bearer ", "").trim();
+    if (!nvmApiKey) {
+      return res.status(401).json({ error: "Missing API Key" });
+    }
+    const result = await burnCredits(planDid, String(credits), nvmApiKey);
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json({ error: result.message });
+    }
   });
 
   const httpServer = createServer(app);

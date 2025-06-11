@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import Footer from "./Footer";
 import Logo from "./Logo";
 import { Badge } from "@/components/ui/badge";
-import { useUserCredits } from "@/lib/useUserCredits";
+import { useUserState } from "@/lib/user-state-context";
 import SettingsModal from "@/components/ui/settings-modal";
 import {
   Dialog,
@@ -41,47 +41,16 @@ export default function ChatContainer() {
   const isEmpty = messages.length === 0;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [credits, refreshCredits] = useUserCredits();
+  const { credits, apiKey, refreshCredits, initialized } = useUserState();
   const loading = credits === null;
-  const initialApiKey =
-    typeof window !== "undefined" ? !!localStorage.getItem("nvmApiKey") : false;
-  const [hasApiKey, setHasApiKey] = useState(initialApiKey);
-  const [settingsOpen, setSettingsOpen] = useState(!initialApiKey);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const hasApiKey = !!apiKey;
 
-  // Refresh credits when a relevant transaction is completed
+  // Automatically open the modal if there is no API Key when the app loads
   useEffect(() => {
-    if (!messages.length) return;
-    const last = messages[messages.length - 1];
-    if (
-      [
-        "nvm-transaction-user",
-        "nvm-transaction-agent",
-        "answer",
-        "final-answer",
-        "error",
-      ].includes(last.type)
-    ) {
-      refreshCredits();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length]);
-
-  // Check API Key on mount and on storage change
-  useEffect(() => {
-    const checkApiKey = () => {
-      const key = localStorage.getItem("nvmApiKey");
-      setHasApiKey(!!key);
-    };
-    checkApiKey();
-    window.addEventListener("storage", checkApiKey);
-    return () => window.removeEventListener("storage", checkApiKey);
-  }, []);
-
-  // Show settings modal if no API Key
-  useEffect(() => {
-    if (!hasApiKey) setSettingsOpen(true);
-  }, [hasApiKey]);
+    if (!apiKey) setSettingsOpen(true);
+  }, [apiKey]);
 
   const handleFinishTyping = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -116,9 +85,10 @@ export default function ChatContainer() {
    */
   const handleLogout = () => {
     localStorage.removeItem("nvmApiKey");
-    setHasApiKey(false);
-    setSettingsOpen(true);
+    refreshCredits();
   };
+
+  if (!initialized) return null;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -169,8 +139,7 @@ export default function ChatContainer() {
         open={settingsOpen}
         onClose={() => {
           setSettingsOpen(false);
-          const key = localStorage.getItem("nvmApiKey");
-          setHasApiKey(!!key);
+          refreshCredits();
         }}
         onApiKeySaved={refreshCredits}
       />

@@ -12,19 +12,22 @@ import {
   sendTaskToOrchestrator,
   updateCreditsAndGetBurnTx,
   getBurnTransaction,
-  orderPlanCredits,
 } from "./chat-api";
 import { subscribeToTaskEvents } from "./chat-sse";
 import { storedConversations, storedMessages } from "./chat-mocks";
 import { Conversation } from "@shared/schema";
+import {
+  llmRouterRequest,
+  orderPlanRequest,
+  titleSummarizeRequest,
+  intentSynthesizeRequest,
+  getPlanCostRequest,
+} from "./chat-requests";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<FullMessage[]>([]);
-  const [messagesByConversationId, setMessagesByConversationId] = useState<{
-    [id: number]: FullMessage[];
-  }>({});
   const [conversations, setConversations] = useState<Conversation[]>(
     [...storedConversations].sort(
       (a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0)
@@ -106,89 +109,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /**
-   * Loads messages for a given conversation ID and updates the current conversation.
-   * @param {number | null} id - Conversation ID or null to clear.
-   */
-  const handleSetCurrentConversationId = (id: number | null) => {
-    clearTimer();
-    // Save current messages to messagesByConversationId before switching
-    if (currentConversationId !== null) {
-      setMessagesByConversationId((prev) => ({
-        ...prev,
-        [currentConversationId]: messages,
-      }));
-    }
-    setCurrentConversationId(id);
-    // Clean up SSE connection when changing conversation (TODO: remove this)
-    if (sseUnsubscribeRef.current) {
-      sseUnsubscribeRef.current();
-      sseUnsubscribeRef.current = null;
-    }
-    if (id !== null) {
-      if (
-        messagesByConversationId[id] &&
-        messagesByConversationId[id].length > 0
-      ) {
-        setMessages(messagesByConversationId[id]);
-        setShowReasoningCollapse(false);
-        setIsStoredConversation(false);
-      } else {
-        loadStoredMessages(id);
-      }
-    } else {
-      setMessages([]);
-      setShowReasoningCollapse(false);
-      setIsStoredConversation(false);
-    }
-  };
-
-  /**
-   * Finds a conversation by its associated taskId.
-   * @param {Conversation[]} conversations - List of conversations
-   * @param {string} taskId - Task id to search for
-   * @returns {Conversation | undefined}
-   */
-  function findConversationByTaskId(
-    conversations: Conversation[],
-    taskId: string
-  ): Conversation | undefined {
-    return conversations.find((conv) => conv.taskId === taskId);
-  }
-
-  /**
-   * Creates a new conversation, selects it, and clears the chat.
-   * @function
-   */
-  const startNewConversation = () => {
-    const newId =
-      conversations.length > 0
-        ? Math.max(...conversations.map((c) => c.id)) + 1
-        : 1;
-    const newConversation: Conversation = {
-      id: newId,
-      title: "New conversation",
-      timestamp: new Date(),
-      // taskId will be set after first agent response
-    };
-    setConversations((prev) => [newConversation, ...prev]);
-    setMessagesByConversationId((prev) => ({ ...prev, [newId]: [] }));
-    setCurrentConversationId(newId);
-    setMessages([]);
-    setShowReasoningCollapse(false);
-    setIsStoredConversation(false);
-    // Clean up SSE connection
-    if (sseUnsubscribeRef.current) {
-      sseUnsubscribeRef.current();
-      sseUnsubscribeRef.current = null;
-    }
-  };
-
-  /**
-   * Sends a message, creates/updates conversation, and manages SSE by taskId.
-   * @function
-   * @param {string} content - Message content
-   */
   const sendMessage = async (content: string) => {
     clearTimer();
     setIsStoredConversation(false);
@@ -202,16 +122,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       conversationId: currentConversationId?.toString() || "new",
       timestamp: new Date(),
     };
-    setMessages((prev) => {
-      const updated = [...prev, userMessage];
-      if (currentConversationId) {
-        setMessagesByConversationId((prevMap) => ({
-          ...prevMap,
-          [currentConversationId]: updated,
-        }));
-      }
-      return updated;
-    });
+    setMessages((prev) => [...prev, userMessage]);
     setShowReasoningCollapse(false);
 
     // Call the LLM router before sending to the agent
@@ -219,23 +130,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       "forward";
     let llmReason = "";
     try {
-      const apiKey = localStorage.getItem("nvmApiKey");
-      const resp = await fetch("/api/llm-router", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-        },
-        body: JSON.stringify({
-          message: content,
-          history: messages,
-        }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        llmAction = data.action;
-        llmReason = data.message || "";
-      }
+      const { action, message } = await llmRouterRequest(content, messages);
+      llmAction = action;
+      llmReason = message || "";
     } catch (e) {
       llmAction = "forward";
     }
@@ -271,7 +168,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           },
         ]);
 
-        const data = await orderPlanCredits();
+        const data = await orderPlanRequest();
 
         if (data.txHash) {
           setMessages((prev) => [
@@ -364,21 +261,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
 
     // If the LLM says 'forward', follow the normal flow (as now)
-    let conversationIdToUse = currentConversationId;
-    let conversationTaskId: string | undefined = undefined;
     if (!currentConversationId) {
       // Get synthesized title from backend
       let title = content.slice(0, 30) + "...";
       try {
-        const resp = await fetch("/api/title/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history: messages }),
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          if (data.title) title = data.title;
-        }
+        const data = await titleSummarizeRequest(messages);
+        if (data.title) title = data.title;
       } catch (e) {
         console.error(e);
       }
@@ -386,26 +274,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         id: conversations.length + 1,
         title,
         timestamp: new Date(),
-        // taskId will be set after first agent response
       };
       setConversations((prev) => [newConversation, ...prev]);
       setCurrentConversationId(newConversation.id);
-      conversationIdToUse = newConversation.id;
     }
 
     // --- INTEGRATION: Use intent synthesis for agent prompt ---
     let agentPrompt = content;
     try {
       // Call backend to synthesize the user's intent from the conversation history
-      const synthRes = await fetch("/api/intent/synthesize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history: messages }),
-      });
-      if (synthRes.ok) {
-        const data = await synthRes.json();
-        if (data.intent) agentPrompt = data.intent;
-      }
+      const data = await intentSynthesizeRequest(messages);
+      if (data.intent) agentPrompt = data.intent;
     } catch (e) {
       // If synthesis fails, fallback to last message
       agentPrompt = content;
@@ -416,16 +295,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Send the synthesized intent (or fallback) to the agent
       const blockNumber = await getCurrentBlockNumber();
       const { task } = await sendTaskToOrchestrator(agentPrompt);
-      conversationTaskId = task.task_id;
-
-      // Update conversation with taskId if not set, but keep the local id for all message mapping
-      setConversations((prev) =>
-        prev.map((conv) =>
-          conv.id === conversationIdToUse && !conv.taskId
-            ? { ...conv, taskId: conversationTaskId }
-            : conv
-        )
-      );
 
       // Clean up previous SSE connection if any
       if (sseUnsubscribeRef.current) {
@@ -436,90 +305,103 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       sseUnsubscribeRef.current = subscribeToTaskEvents(
         task.task_id,
         (data) => {
-          setConversations((prevConvs) => {
-            // Try to find the conversation by taskId
-            let conv = prevConvs.find((c) => c.taskId === task.task_id);
-            let updatedConvs = prevConvs;
-            // If not found, find the most recent conversation without a taskId and assign it
-            if (!conv) {
-              const idx = prevConvs.findIndex((c) => !c.taskId);
-              if (idx !== -1) {
-                const convToUpdate = {
-                  ...prevConvs[idx],
-                  taskId: task.task_id,
-                };
-                updatedConvs = [
-                  ...prevConvs.slice(0, idx),
-                  convToUpdate,
-                  ...prevConvs.slice(idx + 1),
-                ];
-                conv = convToUpdate;
-              }
-            }
-            if (!conv) return updatedConvs;
-            // Always use the latest state for messagesByConversationId
-            setMessagesByConversationId((prevMap) => {
-              const convMsgs = prevMap[conv.id] || [];
-              const agentMessage: FullMessage = {
-                id: convMsgs.length + 1,
-                content: data.content,
-                type:
-                  data.type === "nvm-transaction-agent"
-                    ? "nvm-transaction-agent"
-                    : data.type === "nvm-transaction-user"
-                    ? "nvm-transaction-user"
-                    : data.type || "answer",
-                isUser: false,
-                conversationId: conv.id.toString(),
-                timestamp: new Date(),
-                txHash: data.txHash,
-                artifacts: data.artifacts,
-                credits: data.credits,
-                planDid: data.planDid,
-              };
-              // Avoid duplicates by content, type and txHash
-              const alreadyExists = convMsgs.some(
+          const agentMessage: FullMessage = {
+            id: messages.length + 1,
+            content: data.content,
+            type:
+              data.type === "nvm-transaction-agent"
+                ? "nvm-transaction-agent"
+                : data.type === "nvm-transaction-user"
+                ? "nvm-transaction-user"
+                : data.type || "answer",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+            txHash: data.txHash,
+            artifacts: data.artifacts,
+            credits: data.credits,
+            planDid: data.planDid,
+          };
+          setMessages((prev) => {
+            // Avoid duplicates by content, type and txHash
+            if (
+              prev.some(
                 (m) =>
                   m.content === agentMessage.content &&
                   m.type === agentMessage.type &&
                   m.txHash === agentMessage.txHash
-              );
-              let newMsgs = convMsgs;
-              if (!alreadyExists) {
-                if (agentMessage.txHash) {
-                  newMsgs = [
-                    ...convMsgs.filter(
-                      (m) =>
-                        !(
-                          m.content === agentMessage.content &&
-                          m.type === agentMessage.type &&
-                          !m.txHash
-                        )
-                    ),
-                    agentMessage,
-                  ];
-                } else {
-                  newMsgs = [...convMsgs, agentMessage];
+              )
+            ) {
+              return prev;
+            }
+            // If a final message with txHash arrives, remove the previous pending message with the same content and type
+            if (agentMessage.txHash) {
+              return [
+                ...prev.filter(
+                  (m) =>
+                    !(
+                      m.content === agentMessage.content &&
+                      m.type === agentMessage.type &&
+                      !m.txHash
+                    )
+                ),
+                agentMessage,
+              ];
+            }
+
+            // If the message is a final answer, return the message pero también lanza la actualización de créditos y burnTx en background
+            if (agentMessage.type === "final-answer") {
+              (async () => {
+                const burnTxData = await updateCreditsAndGetBurnTx(
+                  task.task_id
+                );
+                if (burnTxData) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: prev.length + 1,
+                      content: `Task completed. ${burnTxData.credits} credits have been deducted from your balance.`,
+                      type: "nvm-transaction-user",
+                      isUser: false,
+                      conversationId:
+                        currentConversationId?.toString() || "new",
+                      timestamp: new Date(),
+                      txHash: burnTxData.txHash,
+                      credits: burnTxData.credits,
+                      planDid: burnTxData.planDid,
+                    },
+                  ]);
+
+                  try {
+                    const data = await getPlanCostRequest();
+                    const planPrice = Number(data.planPrice);
+                    const planCredits = Number(data.planCredits);
+                    const creditsUsed = Number(burnTxData.credits);
+                    const cost =
+                      planCredits > 0
+                        ? (planPrice / planCredits) * creditsUsed
+                        : 0;
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        id: prev.length + 1,
+                        content: `The final cost of your music video has been ${cost.toFixed(
+                          2
+                        )} USDC.`,
+                        type: "usd-info",
+                        isUser: false,
+                        conversationId:
+                          currentConversationId?.toString() || "new",
+                        timestamp: new Date(),
+                      },
+                    ]);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
-              }
-              // If there is no active conversation, switch to this one and show its messages
-              setMessages((prevMsgs) => {
-                if (currentConversationId === null) {
-                  setCurrentConversationId(conv.id);
-                  return newMsgs;
-                }
-                // If the user is currently viewing this conversation, update visible messages
-                if (conv && currentConversationId === conv.id) {
-                  return newMsgs;
-                }
-                return prevMsgs;
-              });
-              return {
-                ...prevMap,
-                [conv.id]: newMsgs,
-              };
-            });
-            return updatedConvs;
+              })();
+            }
+            return [...prev, agentMessage];
           });
         }
       );
@@ -527,34 +409,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Find the burn transaction for the current plan and wallet from a given block. Send fromBlock as query parameter.
       const burnTxData = await getBurnTransaction(blockNumber);
       if (burnTxData) {
-        setMessagesByConversationId((prevMap) => {
-          const convMsgs = prevMap[conversationIdToUse!] || [];
-          return {
-            ...prevMap,
-            [conversationIdToUse!]: [
-              ...convMsgs,
-              {
-                id: convMsgs.length + 1,
-                content: `I have sent the task to the agent. It will take a few minutes to complete. ${burnTxData.credits} credits have been deducted from your balance.`,
-                type: "nvm-transaction-user",
-                isUser: false,
-                conversationId: conversationIdToUse!.toString(),
-                timestamp: new Date(),
-                txHash: burnTxData.txHash,
-                credits: burnTxData.credits,
-                planDid: burnTxData.planDid,
-              },
-            ],
-          };
-        });
-        if (currentConversationId === conversationIdToUse) {
-          setMessages((prevMsgs) => {
-            const convMsgs = (
-              messagesByConversationId[conversationIdToUse!] || []
-            ).concat();
-            return convMsgs;
-          });
-        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            content: `I have sent the task to the agent. It will take a few minutes to complete. ${burnTxData.credits} credits have been deducted from your balance.`,
+            type: "nvm-transaction-user",
+            isUser: false,
+            conversationId: currentConversationId?.toString() || "new",
+            timestamp: new Date(),
+            txHash: burnTxData.txHash,
+            credits: burnTxData.credits,
+            planDid: burnTxData.planDid,
+          },
+        ]);
       }
     } catch (error) {
       console.error(error);
@@ -569,6 +437,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setShowReasoningCollapse(false);
       setIsStoredConversation(true);
     }
+  };
+
+  const handleSetCurrentConversationId = (id: number | null) => {
+    clearTimer();
+    setCurrentConversationId(id);
+    // Clean up SSE connection when changing conversation (TODO: remove this)
+    if (sseUnsubscribeRef.current) {
+      sseUnsubscribeRef.current();
+      sseUnsubscribeRef.current = null;
+    }
+    if (id !== null) {
+      loadStoredMessages(id);
+    }
+  };
+
+  const startNewConversation = () => {
+    handleSetCurrentConversationId(null);
   };
 
   useEffect(() => {

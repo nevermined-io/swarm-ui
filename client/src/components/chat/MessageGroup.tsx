@@ -112,6 +112,8 @@ export default function MessageGroup({
               ? "bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-medium p-3"
               : messages[0].type === "warning"
               ? "bg-orange-400/10 text-orange-500 border border-orange-400/20 rounded-lg font-medium p-3"
+              : messages[0].type === "usd-info"
+              ? "text-yellow-900 rounded-lg font-medium p-3"
               : "text-card-foreground"
           )}
         >
@@ -292,6 +294,24 @@ export default function MessageGroup({
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-xs flex-1">{text}</span>
+                    </div>
+                  </motion.div>
+                );
+              }
+              if (message.type === "usd-info") {
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col gap-2 bg-yellow-300/50 text-yellow-1200 border border-yellow-400/40 rounded-lg font-medium p-3 shadow-gold"
+                  >
+                    <span className="text-xs font-bold uppercase">
+                      Total cost
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{text}</span>
                     </div>
                   </motion.div>
                 );
